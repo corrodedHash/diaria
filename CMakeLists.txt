@@ -26,7 +26,22 @@ target_include_directories(
     "\$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>"
 )
 
-target_compile_features(executable_lib PUBLIC cxx_std_17)
+target_compile_features(executable_lib PUBLIC cxx_std_23)
+
+# ---- Declare library ----
+
+add_library(
+    crypto_lib OBJECT
+    src/crypto/lib.cpp
+)
+
+target_include_directories(
+    crypto_lib ${warning_guard}
+    PUBLIC
+    "\$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>"
+)
+
+target_compile_features(crypto_lib PUBLIC cxx_std_23)
 
 # ---- Declare executable ----
 
@@ -35,9 +50,9 @@ add_executable(executable::exe ALIAS executable_exe)
 
 set_property(TARGET executable_exe PROPERTY OUTPUT_NAME executable)
 
-target_compile_features(executable_exe PRIVATE cxx_std_17)
+target_compile_features(executable_exe PRIVATE cxx_std_23)
 
-target_link_libraries(executable_exe PRIVATE executable_lib)
+target_link_libraries(executable_exe PRIVATE executable_lib crypto_lib -lsodium)
 
 # ---- Install rules ----
 

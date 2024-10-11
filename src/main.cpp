@@ -1,12 +1,10 @@
-#include <iostream>
-#include <string>
+#include <cstring>
+#include <print>
+#include <string_view>
 
-#include "lib.hpp"
+auto setup_db(std::string_view password) {}
 
 auto main() -> int
 {
-  auto const lib = library {};
-  auto const message = "Hello from " + lib.name + "!";
-  std::cout << message << '\n';
-  return 0;
+  setup_db("abc");
 }
