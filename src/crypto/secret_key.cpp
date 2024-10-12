@@ -65,7 +65,7 @@ auto stored_secret_key::store(private_key_t secret_key,
   return stored_secret_key(serialized_key);
 }
 
-auto stored_secret_key::extract_key(std::string_view password) -> private_key_t
+auto stored_secret_key::extract_key(std::string_view password) const -> private_key_t
 {
   auto salt = std::ranges::subrange(
       serialized_key.begin(),

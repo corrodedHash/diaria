@@ -3,6 +3,7 @@
 #include <print>
 
 #include "crypto/secret_key.hpp"
+#include "util.hpp"
 auto main() -> int
 {
   auto [pk, sk] = generate_keypair();
@@ -11,10 +12,9 @@ auto main() -> int
   auto restored = stored_secret_key(extracted);
   auto restored_sk = restored.extract_key("abc");
   if (!std::ranges::equal(sk, restored_sk)) {
-    const auto byte_printer = [](auto x) { std::print("{:02x}", x); };
-    std::ranges::for_each(sk, byte_printer);
+    print_byte_range(sk);
     std::print("\n");
-    std::ranges::for_each(restored_sk, byte_printer);
+    print_byte_range(restored_sk);
     return 1;
   }
 }

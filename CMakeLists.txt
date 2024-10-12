@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.14)
 include(cmake/prelude.cmake)
 
 project(
-    executable
+    diaria
     VERSION 0.1.0
-    DESCRIPTION "Short description"
-    HOMEPAGE_URL "https://example.com/"
+    DESCRIPTION "Tool to manage diary entries"
+    HOMEPAGE_URL "https://github.com/corrodedHash/diaria"
     LANGUAGES CXX
 )
 
@@ -17,7 +17,7 @@ add_subdirectory(src/crypto)
 
 # ---- Declare executable ----
 
-add_executable(executable_exe src/main.cpp)
+add_executable(executable_exe src/main.cpp src/mmap_file.cpp)
 add_executable(executable::exe ALIAS executable_exe)
 
 set_property(TARGET executable_exe PROPERTY OUTPUT_NAME executable)

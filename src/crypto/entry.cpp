@@ -77,12 +77,12 @@ auto asymdec(const private_key_t& key,
 {
   std::vector<unsigned char> output(
       ciphertext.size() - crypto_box_curve25519xchacha20poly1305_SEALBYTES, 0);
-  public_key_t pk;
-  crypto_scalarmult_base(pk.data(), key.data());
+  public_key_t pubkey;
+  crypto_scalarmult_base(pubkey.data(), key.data());
   if (crypto_box_curve25519xchacha20poly1305_seal_open(output.data(),
                                                        ciphertext.data(),
                                                        ciphertext.size(),
-                                                       pk.data(),
+                                                       pubkey.data(),
                                                        key.data())
       != 0)
   {

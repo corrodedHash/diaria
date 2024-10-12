@@ -6,6 +6,7 @@
 #include "crypto/entry.hpp"
 
 #include "crypto/secret_key.hpp"
+#include "util.hpp"
 auto main() -> int
 {
   using namespace std::literals;
@@ -19,10 +20,9 @@ auto main() -> int
   auto enc = encrypt(symkey, pk, important_data_span);
   auto dec = decrypt(symkey, sk, enc);
   if (!std::ranges::equal(dec, important_data_span)) {
-    const auto byte_printer = [](auto x) { std::print("{:02x}", x); };
-    std::ranges::for_each(important_data_span, byte_printer);
+    print_byte_range(important_data_span);
     std::print("\n");
-    std::ranges::for_each(dec, byte_printer);
+    print_byte_range(dec);
     return 1;
   }
 }
