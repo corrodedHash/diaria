@@ -30,7 +30,7 @@ static auto derive_key(std::string_view password, Salt&& salt) -> symkey_t
   return key;
 }
 
-auto stored_secret_key::store(private_key_t secret_key,
+auto stored_secret_key::store(array_to_const_span_t<private_key_t> secret_key,
                               std::string_view password) -> stored_secret_key
 {
   salt_t salt {};

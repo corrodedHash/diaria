@@ -6,26 +6,29 @@
 
 #include "secret_key.hpp"
 
-auto symenc(const symkey_t& key, std::span<const unsigned char> plaintext)
+auto symenc(array_to_const_span_t<symkey_t> key,
+            std::span<const unsigned char> plaintext)
     -> std::vector<unsigned char>;
 
-auto symdec(const symkey_t& key, std::span<const unsigned char> ciphertext)
+auto symdec(array_to_const_span_t<symkey_t> key,
+            std::span<const unsigned char> ciphertext)
     -> std::vector<unsigned char>;
 
-auto asymenc(const public_key_t& key, std::span<const unsigned char> plaintext)
-    -> std::vector<unsigned char>;
-
-auto asymdec(const private_key_t& key,
-             std::span<const unsigned char> ciphertext)
-    -> std::vector<unsigned char>;
-
-auto encrypt(const symkey_t& symkey,
-             const public_key_t& pubkey,
+auto asymenc(array_to_const_span_t<public_key_t> key,
              std::span<const unsigned char> plaintext)
     -> std::vector<unsigned char>;
 
-auto decrypt(const symkey_t& symkey,
-             const private_key_t& private_key,
+auto asymdec(array_to_const_span_t<private_key_t> key,
+             std::span<const unsigned char> ciphertext)
+    -> std::vector<unsigned char>;
+
+auto encrypt(array_to_const_span_t<symkey_t> symkey,
+             array_to_const_span_t<public_key_t> pubkey,
+             std::span<const unsigned char> plaintext)
+    -> std::vector<unsigned char>;
+
+auto decrypt(array_to_const_span_t<symkey_t> symkey,
+             array_to_const_span_t<private_key_t> private_key,
              std::span<const unsigned char> ciphertext)
     -> std::vector<unsigned char>;
 

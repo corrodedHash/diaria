@@ -10,7 +10,8 @@
 
 #include "crypto/secret_key.hpp"
 
-auto symenc(const symkey_t& key, std::span<const unsigned char> plaintext)
+auto symenc(array_to_const_span_t<symkey_t> key,
+            std::span<const unsigned char> plaintext)
     -> std::vector<unsigned char>
 {
   std::array<unsigned char, crypto_secretbox_xchacha20poly1305_NONCEBYTES>
@@ -37,7 +38,8 @@ auto symenc(const symkey_t& key, std::span<const unsigned char> plaintext)
   return output;
 }
 
-auto symdec(const symkey_t& key, std::span<const unsigned char> ciphertext)
+auto symdec(array_to_const_span_t<symkey_t> key,
+            std::span<const unsigned char> ciphertext)
     -> std::vector<unsigned char>
 {
   auto nonce = std::ranges::subrange(
@@ -57,7 +59,8 @@ auto symdec(const symkey_t& key, std::span<const unsigned char> ciphertext)
   return plaintext;
 }
 
-auto asymenc(const public_key_t& key, std::span<const unsigned char> plaintext)
+auto asymenc(array_to_const_span_t<public_key_t> key,
+             std::span<const unsigned char> plaintext)
     -> std::vector<unsigned char>
 {
   std::vector<unsigned char> output(
@@ -71,7 +74,7 @@ auto asymenc(const public_key_t& key, std::span<const unsigned char> plaintext)
   return output;
 }
 
-auto asymdec(const private_key_t& key,
+auto asymdec(array_to_const_span_t<private_key_t> key,
              std::span<const unsigned char> ciphertext)
     -> std::vector<unsigned char>
 {
@@ -91,8 +94,8 @@ auto asymdec(const private_key_t& key,
   return output;
 }
 
-auto encrypt(const symkey_t& symkey,
-             const public_key_t& pubkey,
+auto encrypt(array_to_const_span_t<symkey_t> symkey,
+             array_to_const_span_t<public_key_t> pubkey,
              std::span<const unsigned char> plaintext)
     -> std::vector<unsigned char>
 {
@@ -100,8 +103,8 @@ auto encrypt(const symkey_t& symkey,
   auto asymmetric_encrypted = asymenc(pubkey, symmetric_encrypted);
   return asymmetric_encrypted;
 }
-auto decrypt(const symkey_t& symkey,
-             const private_key_t& private_key,
+auto decrypt(array_to_const_span_t<symkey_t> symkey,
+             array_to_const_span_t<private_key_t> private_key,
              std::span<const unsigned char> ciphertext)
     -> std::vector<unsigned char>
 {

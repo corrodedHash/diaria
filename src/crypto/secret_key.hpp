@@ -1,12 +1,24 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
+#include <span>
 #include <string_view>
 #include <utility>
 
 #include <sodium/crypto_box_curve25519xchacha20poly1305.h>
 #include <sodium/crypto_pwhash_scryptsalsa208sha256.h>
 #include <sodium/crypto_secretbox_xchacha20poly1305.h>
+
+template<class X>
+class array_to_const_span;
+template<class X, std::size_t Size>
+struct array_to_const_span<std::array<X, Size>>
+{
+  using result_t = std::span<const X, Size>;
+};
+template<class X>
+using array_to_const_span_t = array_to_const_span<X>::result_t;
 
 using private_key_t =
     std::array<unsigned char,
@@ -40,7 +52,7 @@ private:
 
 public:
   auto get_serialized_key() const -> serialized_key_t { return serialized_key; }
-  static auto store(private_key_t secret_key,
+  static auto store(array_to_const_span_t<private_key_t> secret_key,
                     std::string_view password) -> stored_secret_key;
   explicit stored_secret_key(serialized_key_t data)
       : serialized_key(data)
