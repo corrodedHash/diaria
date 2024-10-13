@@ -11,7 +11,7 @@
 #include <sodium/crypto_secretbox_xchacha20poly1305.h>
 
 template<class X>
-class array_to_const_span;
+struct array_to_const_span;
 template<class X, std::size_t Size>
 struct array_to_const_span<std::array<X, Size>>
 {

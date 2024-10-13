@@ -13,7 +13,7 @@ project(
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
-add_subdirectory(src/crypto)
+add_subdirectory(src)
 
 # ---- Declare executable ----
 
@@ -24,7 +24,7 @@ set_property(TARGET executable_exe PROPERTY OUTPUT_NAME executable)
 
 target_compile_features(executable_exe PRIVATE cxx_std_23)
 
-target_link_libraries(executable_exe PRIVATE crypto_lib)
+target_link_libraries(executable_exe PRIVATE crypto_lib diaria_lib)
 
 # ---- Install rules ----
 
