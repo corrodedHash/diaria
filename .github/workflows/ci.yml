@@ -103,39 +103,27 @@ jobs:
   test:
     needs: [lint]
 
-    strategy:
-      matrix:
-        os: [ubuntu-22.04]
-        # os: [macos-14, ubuntu-22.04, windows-2022]
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-22.04
     container: ubuntu:24.10
 
-    env: { DEBIAN_FRONTEND: noninteractive }
+    env: { CXX: clang++-19, DEBIAN_FRONTEND: noninteractive }
 
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Install cmake and static analyzers
-      if: matrix.os == 'ubuntu-22.04'
       run: >-
         apt-get update &&
-        apt-get install clang-tidy-19 cppcheck cmake libsodium-dev -y -q
+        apt-get install clang-tidy-19 clang-19 cppcheck cmake libsodium-dev -y -q
 
         update-alternatives --install
         /usr/bin/clang-tidy clang-tidy
         /usr/bin/clang-tidy-19 140
 
-    - name: Setup MultiToolTask
-      if: matrix.os == 'windows-2022'
-      run: |
-        Add-Content "$env:GITHUB_ENV" 'UseMultiToolTask=true'
-        Add-Content "$env:GITHUB_ENV" 'EnforceProcessCountAcrossBuilds=true'
-
     - name: Configure
-      shell: pwsh
-      run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
+      run: cmake --preset=ci-ubuntu
 
     - name: Build
       run: cmake --build build --config Release -j 2
@@ -153,7 +141,7 @@ jobs:
 
     runs-on: ubuntu-22.04
 
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
       && github.event_name == 'push'
       && github.repository_owner == 'friendlyanon'
 
