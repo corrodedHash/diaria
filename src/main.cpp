@@ -134,18 +134,23 @@ auto add_entry()
                    encrypted.size());
 }
 
+auto read_password()
+{
+  std::string password;
+  std::print("Enter password: ");
+  std::getline(std::cin, password);
+  return password;
+}
+
 auto read_entry(const std::filesystem::path& entry)
 {
   std::filesystem::path diaria_path("/home/lukas/diaria");
 
-  std::string password;
-  std::print("Enter password: ");
-  std::getline(std::cin, password);
   const auto entry_fd = open(entry.c_str(), O_RDONLY | O_CLOEXEC);
   mmap_file file_span(entry_fd);
-
   auto symkey = load_symkey(diaria_path);
 
+  auto password = read_password();
   auto private_key = load_private_key(diaria_path, password);
   auto decrypted = decrypt(symkey, private_key, file_span.getSpan());
   std::print("{}", std::string(decrypted.begin(), decrypted.end()));
