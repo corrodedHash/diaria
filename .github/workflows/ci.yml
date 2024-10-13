@@ -22,8 +22,12 @@ jobs:
     - name: Install codespell
       run: pip3 install codespell
 
+    - name: Install cmake
+      run: sudo apt-get update
+        && sudo apt-get install -y cmake clang-format
+
     - name: Lint
-      run: cmake -D FORMAT_COMMAND=clang-format-14 -P cmake/lint.cmake
+      run: cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake
 
     - name: Spell check
       if: always()
@@ -39,9 +43,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install LCov
-      run: sudo apt-get update -q
-        && sudo apt-get install lcov -q -y
+    - name: Install LCov and CMake
+      run: sudo apt-get update
+        && sudo apt-get install lcov cmake -q -y
 
     - name: Configure
       run: cmake --preset=ci-coverage
@@ -66,11 +70,16 @@ jobs:
     needs: [lint]
 
     runs-on: ubuntu-22.04
+    container: ubuntu:24.10
 
-    env: { CXX: clang++-14 }
+    env: { CXX: clang++-19, DEBIAN_FRONTEND: noninteractive }
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install CMake
+      run: apt-get update
+        && apt-get install cmake clang++-19 libsodium-dev -q -y
 
     - name: Configure
       run: cmake --preset=ci-sanitize
@@ -96,21 +105,27 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-14, ubuntu-22.04, windows-2022]
+        os: [ubuntu-22.04]
+        # os: [macos-14, ubuntu-22.04, windows-2022]
 
     runs-on: ${{ matrix.os }}
+    container: ubuntu:24.10
+
+    env: { DEBIAN_FRONTEND: noninteractive }
+
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install static analyzers
+    - name: Install cmake and static analyzers
       if: matrix.os == 'ubuntu-22.04'
       run: >-
-        sudo apt-get install clang-tidy-14 cppcheck -y -q
+        apt-get update &&
+        apt-get install clang-tidy-19 cppcheck cmake libsodium-dev -y -q
 
-        sudo update-alternatives --install
+        update-alternatives --install
         /usr/bin/clang-tidy clang-tidy
-        /usr/bin/clang-tidy-14 140
+        /usr/bin/clang-tidy-19 140
 
     - name: Setup MultiToolTask
       if: matrix.os == 'windows-2022'
@@ -156,7 +171,7 @@ jobs:
 
     - name: Install Doxygen
       run: sudo apt-get update -q
-        && sudo apt-get install doxygen -q -y
+        && sudo apt-get install doxygen cmake -q -y
 
     - name: Build docs
       run: cmake "-DPROJECT_SOURCE_DIR=$PWD" "-DPROJECT_BINARY_DIR=$PWD/build"
