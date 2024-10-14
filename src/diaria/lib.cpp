@@ -15,14 +15,14 @@
 #include "./lib.hpp"
 
 #include <fcntl.h>
-#include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "./util.hpp"
+#include "common.hpp"
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
 #include "mmap_file.hpp"
-#include "util.hpp"
 
 void setup_db()
 {

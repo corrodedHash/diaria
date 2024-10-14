@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include "util.hpp"
+#include "common.hpp"
 
 #include "crypto/secret_key.hpp"
 

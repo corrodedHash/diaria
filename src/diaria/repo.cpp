@@ -3,14 +3,14 @@
 #include <ios>
 #include <string_view>
 
-#include "repo.hpp"
+#include "./repo.hpp"
+
 #include <fcntl.h>
 
+#include "./util.hpp"
+#include "common.hpp"
 #include "crypto/entry.hpp"
 #include "mmap_file.hpp"
-#include "util.hpp"
-
-
 
 void dump_repo(const key_path_t& keypath,
                const repo_path_t& repo,
@@ -57,8 +57,6 @@ void load_repo(const key_path_t& keypath,
     if (!entry.is_regular_file()) {
       continue;
     }
-    const auto input_file_name = entry.path().filename().string();
-
     const auto entry_fd = open(entry.path().c_str(), O_RDONLY | O_CLOEXEC);
     const mmap_file file_span(entry_fd);
 

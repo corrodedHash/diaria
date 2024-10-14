@@ -8,7 +8,6 @@
 #include <sys/stat.h>  // For fstat
 #include <unistd.h>
 
-
 class mmap_file
 {
 public:
@@ -35,7 +34,7 @@ public:
 
     // Initialize the span
     span = std::span<const unsigned char>(
-        reinterpret_cast<const unsigned char*>(mapped_region), size);
+        static_cast<unsigned char*>(mapped_region), size);
   }
 
   // Delete copy constructor
@@ -97,7 +96,10 @@ public:
   }
 
   // Get the span representing the file contents
-  [[nodiscard]] auto get_span() const -> std::span<const unsigned char> { return span; }
+  [[nodiscard]] auto get_span() const -> std::span<const unsigned char>
+  {
+    return span;
+  }
 
 private:
   int fd;  // File descriptor
