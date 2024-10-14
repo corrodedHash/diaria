@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "./lib.hpp"
+#include "./commands.hpp"
 
 #include <fcntl.h>
 #include <sys/wait.h>
@@ -24,30 +24,28 @@
 #include "crypto/secret_key.hpp"
 #include "mmap_file.hpp"
 
-void setup_db()
+void setup_db(const key_path_t& keypath)
 {
-  std::filesystem::path const diaria_path("/home/lukas/diaria");
-
   const auto [pk, sk] = generate_keypair();
   const auto symkey = generate_symkey();
 
-  if (!std::filesystem::create_directories(diaria_path)) {
+  if (!std::filesystem::create_directories(keypath.root)) {
     throw std::runtime_error("Could not create directory");
   };
   const auto password = read_password();
   const auto stored_key = stored_secret_key::store(std::span(sk), password);
-  std::ofstream keyfile(diaria_path / "key.key",
+  std::ofstream keyfile(keypath.get_private_key_path(),
                         std::ios::out | std::ios::binary | std::ios::trunc);
   keyfile.write(
       make_signed_char(stored_key.get_serialized_key().data()),
       static_cast<std::streamsize>(stored_key.get_serialized_key().size()));
 
-  std::ofstream pubkeyfile(diaria_path / "key.pub",
+  std::ofstream pubkeyfile(keypath.get_pubkey_path(),
                            std::ios::out | std::ios::binary | std::ios::trunc);
   pubkeyfile.write(make_signed_char(pk.data()),
                    static_cast<std::streamsize>(pk.size()));
 
-  std::ofstream symkeyfile(diaria_path / "key.symkey",
+  std::ofstream symkeyfile(keypath.get_symkey_path(),
                            std::ios::out | std::ios::binary | std::ios::trunc);
   symkeyfile.write(make_signed_char(symkey.data()), symkey.size());
 }

@@ -3,7 +3,7 @@
 #include <string>
 
 #include "CLI11.hpp"
-#include "diaria/lib.hpp"
+#include "diaria/commands.hpp"
 #include "diaria/repo.hpp"
 #include "diaria/util.hpp"
 
@@ -17,7 +17,7 @@ auto main(int argc, char** argv) -> int
   const repo_path_t entrypath("/home/lukas/diaria/entries");
 
   app.add_subcommand("init", "Initialize the diaria database on this system")
-      ->final_callback(setup_db);
+      ->final_callback([&keypath]() { setup_db(keypath); });
   app.add_subcommand("add", "Add a new diary entry")
       ->final_callback([&keypath, &entrypath]()
                        { add_entry(keypath, entrypath.repo); });

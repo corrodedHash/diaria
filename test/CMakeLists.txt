@@ -20,9 +20,3 @@ add_executable(crypto_primitives_test src/crypto_primitives_test.cpp)
 target_link_libraries(crypto_primitives_test PRIVATE crypto_lib)
 target_compile_features(crypto_primitives_test PRIVATE cxx_std_23)
 add_test(NAME crypto_primitives_test COMMAND crypto_primitives_test)
-
-
-
-# ---- End-of-file commands ----
-
-add_folders(Test)
