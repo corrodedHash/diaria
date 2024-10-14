@@ -1,13 +1,11 @@
 #pragma once
 #include <cstdlib>
-#include <print>
 #include <span>  // For std::span
 #include <stdexcept>
 
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>  // For fstat
-#include <sys/wait.h>
 #include <unistd.h>
 
 
@@ -15,7 +13,7 @@ class mmap_file
 {
 public:
   // Constructor: Takes the file descriptor and maps the file into memory
-  mmap_file(int fd)
+  explicit mmap_file(int fd)
       : fd(fd)
   {
     // Get the size of the file
@@ -44,7 +42,7 @@ public:
   mmap_file(const mmap_file&) = delete;
 
   // Delete copy assignment operator
-  mmap_file& operator=(const mmap_file&) = delete;
+  auto operator=(const mmap_file&) -> mmap_file& = delete;
 
   // Move constructor
   mmap_file(mmap_file&& other) noexcept
@@ -61,7 +59,7 @@ public:
   }
 
   // Move assignment operator
-  mmap_file& operator=(mmap_file&& other) noexcept
+  auto operator=(mmap_file&& other) noexcept -> mmap_file&
   {
     if (this != &other) {
       // Clean up any existing resources
@@ -99,7 +97,7 @@ public:
   }
 
   // Get the span representing the file contents
-  std::span<const unsigned char> getSpan() const { return span; }
+  [[nodiscard]] auto get_span() const -> std::span<const unsigned char> { return span; }
 
 private:
   int fd;  // File descriptor

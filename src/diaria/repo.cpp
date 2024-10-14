@@ -34,7 +34,7 @@ void dump_repo(const key_path_t& keypath,
     const auto entry_fd = open(entry.path().c_str(), O_RDONLY | O_CLOEXEC);
     const mmap_file file_span(entry_fd);
 
-    const auto decrypted = decrypt(symkey, private_key, file_span.getSpan());
+    const auto decrypted = decrypt(symkey, private_key, file_span.get_span());
     const auto output_file_name =
         entry.path().filename().replace_extension("txt");
     std::ofstream entry_file(
@@ -60,7 +60,7 @@ void load_repo(const key_path_t& keypath,
     const auto entry_fd = open(entry.path().c_str(), O_RDONLY | O_CLOEXEC);
     const mmap_file file_span(entry_fd);
 
-    const auto decrypted = encrypt(symkey, pubkey, file_span.getSpan());
+    const auto decrypted = encrypt(symkey, pubkey, file_span.get_span());
     const auto output_file_name =
         entry.path().filename().replace_extension("diaria");
     std::ofstream entry_file(
