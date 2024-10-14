@@ -77,7 +77,7 @@ auto main(int argc, char** argv) -> int
   subcom_add->add_option(
       "--editor",
       cmdline,
-      "Use the editor commandline. Write a % seperated by a space for the "
+      "Use the editor commandline. Write a % separated by a space for the "
       "temporary file which will be written.");
   subcom_add->final_callback(
       [&keypath, &entrypath, &cmdline, &input_path]()

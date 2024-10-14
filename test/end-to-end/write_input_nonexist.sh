@@ -6,7 +6,7 @@ echo Writing keys to $TMPDIR/keys
 echo abc | $DIARIA --keys $TMPDIR/keys init
 
 mkdir -p $TMPDIR/entries
-$DIARIA --keys $TMPDIR/keys --entries $TMPDIR/entries add --input "/dev/null/nonexistant"
+$DIARIA --keys $TMPDIR/keys --entries $TMPDIR/entries add --input "/dev/null/nonexistent"
 
 DIARY_ENTRY_COUNT=$(ls -1 $TMPDIR/entries | wc -l)
 # CHECK: Number of diary entries: 0
