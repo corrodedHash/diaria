@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <ranges>
 #include <string_view>
 
 #include "./repo.hpp"
@@ -23,18 +24,16 @@ void dump_repo(const key_path_t& keypath,
 
   std::filesystem::create_directories(target);
 
-  for (const auto& entry : std::filesystem::directory_iterator(repo.repo)) {
-    if (!entry.is_regular_file()) {
-      continue;
-    }
-    const auto input_file_name = entry.path().filename().string();
-
-    if (!input_file_name.ends_with(".diaria")) {
-      continue;
-    }
-
-    const auto entry_fd = open(entry.path().c_str(), O_RDONLY | O_CLOEXEC);
-    const mmap_file file_span(entry_fd);
+  for (const auto& entry :
+       std::filesystem::directory_iterator(repo.repo)
+           | std::ranges::views::filter([](auto entry)
+                                        { return entry.is_regular_file(); })
+           | std::ranges::views::filter(
+               [](auto entry)
+               { return entry.path().filename().string().ends_with(".diaria"); }))
+  {
+    const owned_fd entry_fd(entry);
+    const owned_mmap file_span(entry_fd);
 
     const auto decrypted = decrypt(symkey, private_key, file_span.get_span());
     const auto output_file_name =
@@ -53,12 +52,12 @@ void load_repo(const key_path_t& keypath,
   const auto pubkey = load_pubkey(keypath.get_pubkey_path());
   const auto symkey = load_symkey(keypath.get_symkey_path());
 
-  for (const auto& entry : std::filesystem::directory_iterator(source)) {
-    if (!entry.is_regular_file()) {
-      continue;
-    }
-    const auto entry_fd = open(entry.path().c_str(), O_RDONLY | O_CLOEXEC);
-    const mmap_file file_span(entry_fd);
+  for (const auto& entry : std::filesystem::directory_iterator(source)
+           | std::ranges::views::filter([](auto entry)
+                                        { return entry.is_regular_file(); }))
+  {
+    const owned_fd entry_fd(entry);
+    const owned_mmap file_span(entry_fd);
 
     const auto decrypted = encrypt(symkey, pubkey, file_span.get_span());
     const auto output_file_name =
