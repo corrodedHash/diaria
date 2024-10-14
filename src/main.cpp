@@ -15,16 +15,13 @@ auto main(int argc, char** argv) -> int
   app.require_subcommand(1);
 
   const key_path_t keypath {"/home/lukas/diaria"};
-  const std::filesystem::path entrypath("/home/lukas/diaria/entries");
+  const repo_path_t entrypath("/home/lukas/diaria/entries");
 
-  auto* subcom_setup =
-      app.add_subcommand("init",
-                         "Initialize the diaria database on this system")
-          ->final_callback(setup_db);
-  CLI::App* subcom_add =
-      app.add_subcommand("add", "Add a new diary entry")
-          ->final_callback([&keypath, &entrypath]()
-                           { add_entry(keypath, entrypath); });
+  app.add_subcommand("init", "Initialize the diaria database on this system")
+      ->final_callback(setup_db);
+  app.add_subcommand("add", "Add a new diary entry")
+      ->final_callback([&keypath, &entrypath]()
+                       { add_entry(keypath, entrypath.repo); });
   {
     std::string entry_path {};
     CLI::App* subcom_read =
@@ -57,7 +54,7 @@ auto main(int argc, char** argv) -> int
         });
     subcom_repo_load->final_callback(
         [&keypath, &entrypath, &dumped_repo_path]()
-        { load_repo(key_path_t {keypath}, dumped_repo_path, entrypath); });
+        { load_repo(key_path_t {keypath}, entrypath, dumped_repo_path); });
     app.add_subcommand(subcom_repo);
   }
 

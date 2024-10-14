@@ -38,16 +38,17 @@ void setup_db()
   std::ofstream keyfile(diaria_path / "key.key",
                         std::ios::out | std::ios::binary | std::ios::trunc);
   keyfile.write(
-      reinterpret_cast<const char*>(stored_key.get_serialized_key().data()),
-      stored_key.get_serialized_key().size());
+      make_signed_char(stored_key.get_serialized_key().data()),
+      static_cast<std::streamsize>(stored_key.get_serialized_key().size()));
 
   std::ofstream pubkeyfile(diaria_path / "key.pub",
                            std::ios::out | std::ios::binary | std::ios::trunc);
-  pubkeyfile.write(reinterpret_cast<const char*>(pk.data()), pk.size());
+  pubkeyfile.write(make_signed_char(pk.data()),
+                   static_cast<std::streamsize>(pk.size()));
 
   std::ofstream symkeyfile(diaria_path / "key.symkey",
                            std::ios::out | std::ios::binary | std::ios::trunc);
-  symkeyfile.write(reinterpret_cast<const char*>(symkey.data()), symkey.size());
+  symkeyfile.write(make_signed_char(symkey.data()), symkey.size());
 }
 
 auto create_entry_interactive()
@@ -80,9 +81,10 @@ auto get_iso_timestamp_utc() -> std::string
   // Convert time_t to a tm structure for UTC time
   std::tm utc_tm = *std::gmtime(&now_time_t);
 
+  constexpr int year = 1900;
   // Format the timestamp using std::format
   return std::format("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
-                     utc_tm.tm_year + 1900,
+                     utc_tm.tm_year + year,
                      utc_tm.tm_mon + 1,
                      utc_tm.tm_mday,
                      utc_tm.tm_hour,
@@ -103,8 +105,8 @@ void add_entry(const key_path_t& keypath,
       entrypath / std::format("{}.diaria", get_iso_timestamp_utc());
   std::ofstream entry_file(file_name.c_str(),
                            std::ios::out | std::ios::binary | std::ios::trunc);
-  entry_file.write(reinterpret_cast<const char*>(encrypted.data()),
-                   encrypted.size());
+  entry_file.write(make_signed_char(encrypted.data()),
+                   static_cast<std::streamsize>(encrypted.size()));
 }
 
 void read_entry(const key_path_t& keypath, const std::filesystem::path& entry)

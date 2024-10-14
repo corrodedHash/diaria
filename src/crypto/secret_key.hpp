@@ -51,12 +51,12 @@ private:
   serialized_key_t serialized_key;
 
 public:
-  auto get_serialized_key() const -> serialized_key_t { return serialized_key; }
+  [[nodiscard]] auto get_serialized_key() const -> serialized_key_t { return serialized_key; }
   static auto store(array_to_const_span_t<private_key_t> secret_key,
                     std::string_view password) -> stored_secret_key;
   explicit stored_secret_key(serialized_key_t data)
       : serialized_key(data)
   {
   }
-  auto extract_key(std::string_view password) const -> private_key_t;
+  [[nodiscard]] auto extract_key(std::string_view password) const -> private_key_t;
 };

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <ranges>
 #include <stdexcept>
 #include <string_view>
@@ -6,11 +7,16 @@
 
 #include "secret_key.hpp"
 
-#include <sodium/crypto_box_curve25519xsalsa20poly1305.h>
+#include <sodium/crypto_pwhash_scryptsalsa208sha256.h>
+#include <sodium/crypto_secretbox_xchacha20poly1305.h>
+#include <sodium/crypto_box_curve25519xchacha20poly1305.h>
 #include <sodium/randombytes.h>
 
+namespace
+{
+
 template<class Salt>
-static auto derive_key(std::string_view password, Salt&& salt) -> symkey_t
+auto derive_key(std::string_view password, const Salt& salt) -> symkey_t
 {
   symkey_t key {};
 
@@ -29,6 +35,7 @@ static auto derive_key(std::string_view password, Salt&& salt) -> symkey_t
   }
   return key;
 }
+}  // namespace
 
 auto stored_secret_key::store(array_to_const_span_t<private_key_t> secret_key,
                               std::string_view password) -> stored_secret_key
@@ -54,18 +61,20 @@ auto stored_secret_key::store(array_to_const_span_t<private_key_t> secret_key,
     throw std::invalid_argument("Key encryption failed");
   }
 
-  auto q = {
+  auto output_parts = {
       std::ranges::subrange(salt.begin(), salt.end()),
       std::ranges::subrange(nonce.begin(), nonce.end()),
       std::ranges::subrange(output.begin(), output.end()),
   };
   stored_secret_key::serialized_key_t serialized_key {};
-  std::ranges::copy(q | std::ranges::views::join, serialized_key.begin());
+  std::ranges::copy(output_parts | std::ranges::views::join,
+                    serialized_key.begin());
 
   return stored_secret_key(serialized_key);
 }
 
-auto stored_secret_key::extract_key(std::string_view password) const -> private_key_t
+auto stored_secret_key::extract_key(std::string_view password) const
+    -> private_key_t
 {
   auto salt = std::ranges::subrange(
       serialized_key.begin(),
