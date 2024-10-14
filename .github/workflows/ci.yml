@@ -79,7 +79,7 @@ jobs:
 
     - name: Install CMake
       run: apt-get update
-        && apt-get install cmake clang++-19 libsodium-dev -q -y
+        && apt-get install cmake clang++-19 libsodium-dev llvm -q -y
 
     - name: Configure
       run: cmake --preset=ci-sanitize
@@ -116,7 +116,7 @@ jobs:
     - name: Install cmake and static analyzers
       run: >-
         apt-get update &&
-        apt-get install clang-tidy-19 clang-19 cppcheck cmake libsodium-dev -y -q
+        apt-get install clang-tidy-19 clang-19 cppcheck cmake libsodium-dev llvm -y -q
 
         update-alternatives --install
         /usr/bin/clang-tidy clang-tidy
