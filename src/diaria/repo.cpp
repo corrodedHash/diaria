@@ -1,8 +1,10 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <string_view>
 
 #include "repo.hpp"
+#include <fcntl.h>
 
 #include "crypto/entry.hpp"
 #include "mmap_file.hpp"

@@ -4,6 +4,8 @@
 #include <ios>
 #include <iostream>
 #include <print>
+#include <string>
+#include <string_view>
 
 #include "util.hpp"
 
@@ -43,6 +45,6 @@ auto load_private_key(const std::filesystem::path& file_path,
                                  std::ios::in | std::ios::binary);
   private_key_file.read(make_signed_char(stored_private_key_raw.data()),
                         stored_private_key_raw.size());
-  stored_secret_key stored_private_key(stored_private_key_raw);
+  stored_secret_key const stored_private_key(stored_private_key_raw);
   return stored_private_key.extract_key(password);
 }

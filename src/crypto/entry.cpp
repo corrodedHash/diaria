@@ -1,5 +1,8 @@
 #include <algorithm>
+#include <array>
 #include <ranges>
+#include <span>
+#include <stdexcept>
 #include <vector>
 
 #include "entry.hpp"
@@ -7,6 +10,7 @@
 #include <sodium/crypto_box_curve25519xchacha20poly1305.h>
 #include <sodium/crypto_scalarmult.h>
 #include <sodium/crypto_secretbox_xchacha20poly1305.h>
+#include <sodium/randombytes.h>
 
 #include "crypto/secret_key.hpp"
 

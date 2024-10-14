@@ -1,4 +1,7 @@
+#include <array>
+#include <chrono>
 #include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -12,9 +15,7 @@
 #include "./lib.hpp"
 
 #include <fcntl.h>
-#include <sodium/crypto_stream_xchacha20.h>
-#include <sys/mman.h>
-#include <sys/stat.h>  // For fstat
+#include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -25,7 +26,7 @@
 
 void setup_db()
 {
-  std::filesystem::path diaria_path("/home/lukas/diaria");
+  std::filesystem::path const diaria_path("/home/lukas/diaria");
 
   const auto [pk, sk] = generate_keypair();
   const auto symkey = generate_symkey();
@@ -76,7 +77,7 @@ auto get_iso_timestamp_utc() -> std::string
   auto now = std::chrono::system_clock::now();
 
   // Convert to time_t for easy manipulation
-  std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+  std::time_t const now_time_t = std::chrono::system_clock::to_time_t(now);
 
   // Convert time_t to a tm structure for UTC time
   std::tm utc_tm = *std::gmtime(&now_time_t);

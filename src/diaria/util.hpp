@@ -1,6 +1,8 @@
 
 #pragma once
 #include <filesystem>
+#include <string>
+#include <string_view>
 
 #include "crypto/secret_key.hpp"
 
@@ -37,7 +39,7 @@ auto load_private_key(const std::filesystem::path& file_path,
 struct key_path_t
 {
   std::filesystem::path root;
-  auto get_symkey_path() const { return root / "key.sym"; }
-  auto get_pubkey_path() const { return root / "key.pub"; }
-  auto get_private_key_path() const { return root / "key.key"; }
+  [[nodiscard]] auto get_symkey_path() const { return root / "key.sym"; }
+  [[nodiscard]] auto get_pubkey_path() const { return root / "key.pub"; }
+  [[nodiscard]] auto get_private_key_path() const { return root / "key.key"; }
 };

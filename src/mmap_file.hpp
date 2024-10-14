@@ -13,8 +13,8 @@ class mmap_file
 {
 public:
   // Constructor: Takes the file descriptor and maps the file into memory
-  explicit mmap_file(int fd)
-      : fd(fd)
+  explicit mmap_file(int my_fd)
+      : fd(my_fd)
   {
     // Get the size of the file
     struct stat file_stat
@@ -24,7 +24,7 @@ public:
       close(fd);
       throw std::runtime_error("Failed to get file size");
     }
-    size = file_stat.st_size;
+    size = static_cast<std::size_t>(file_stat.st_size);
 
     // Map the file into memory
     mapped_region = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
