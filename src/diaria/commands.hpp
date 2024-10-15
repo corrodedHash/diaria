@@ -12,4 +12,6 @@ void add_entry(const key_path_t& keypath,
                std::string_view cmdline,
                std::optional<std::filesystem::path> maybe_input_file);
 
-void read_entry(const key_path_t& keypath, const std::filesystem::path& entry);
+void read_entry(const key_path_t& keypath,
+                const std::filesystem::path& entry,
+                const std::optional<std::filesystem::path>& output);

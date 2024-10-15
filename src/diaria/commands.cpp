@@ -114,7 +114,7 @@ auto create_entry_interactive(std::string_view cmdline)
   int child_status {};
   waitpid(child_pid, &child_status, 0);
   constexpr std::size_t buffersize = 512;
-  std::array<unsigned char, buffersize> mybuffer{};
+  std::array<unsigned char, buffersize> mybuffer {};
 
   ssize_t bytesread = 1;
   std::vector<unsigned char> contents {};
@@ -195,7 +195,9 @@ void add_entry(const key_path_t& keypath,
                    static_cast<std::streamsize>(encrypted.size()));
 }
 
-void read_entry(const key_path_t& keypath, const std::filesystem::path& entry)
+void read_entry(const key_path_t& keypath,
+                const std::filesystem::path& entry,
+                const std::optional<std::filesystem::path>& output)
 {
   std::ifstream stream(entry, std::ios::in | std::ios::binary);
   if (stream.fail()) {
@@ -210,5 +212,14 @@ void read_entry(const key_path_t& keypath, const std::filesystem::path& entry)
       load_private_key(keypath.get_private_key_path(), password);
   const auto decrypted = decrypt(
       symkey_span_t {symkey}, private_key_span_t {private_key}, contents);
-  std::print("{}\n", std::string(decrypted.begin(), decrypted.end()));
+  if (output) {
+    std::ofstream output_stream(output.value(), std::ios::out);
+    if (output_stream.fail()) {
+      throw std::runtime_error("Could not open entry file");
+    }
+    output_stream.write(make_signed_char(decrypted.data()),
+                        static_cast<std::streamsize>(decrypted.size()));
+  } else {
+    std::print("{}\n", std::string(decrypted.begin(), decrypted.end()));
+  }
 }
