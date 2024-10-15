@@ -79,6 +79,7 @@ void sync_repo_git(const repo_path_t& repo)
   auto workingdir = std::filesystem::current_path();
   std::filesystem::current_path(repo.repo);
   system("git add *.diaria");
+  system("git commit -m \"Added entry\"");
   system("git push");
   system("git pull");
   std::filesystem::current_path(workingdir);

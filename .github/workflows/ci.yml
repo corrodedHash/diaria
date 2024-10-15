@@ -33,39 +33,6 @@ jobs:
       if: always()
       run: cmake -P cmake/spell.cmake
 
-  coverage:
-    needs: [lint]
-
-    runs-on: ubuntu-22.04
-
-    if: github.repository_owner == 'friendlyanon'
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install LCov and CMake
-      run: sudo apt-get update
-        && sudo apt-get install lcov cmake -q -y
-
-    - name: Configure
-      run: cmake --preset=ci-coverage
-
-    - name: Build
-      run: cmake --build build/coverage -j 2
-
-    - name: Test
-      working-directory: build/coverage
-      run: ctest --output-on-failure --no-tests=error -j 2
-
-    - name: Process coverage info
-      run: cmake --build build/coverage -t coverage
-
-    - name: Submit to codecov.io
-      uses: codecov/codecov-action@v4
-      with:
-        file: build/coverage/coverage.info
-        token: ${{ secrets.CODECOV_TOKEN }}
-
   sanitize:
     runs-on: ubuntu-22.04
     container: ubuntu:24.10
@@ -78,7 +45,7 @@ jobs:
     - name: Install CMake
       run: >-
         apt-get update
-        && apt-get install cmake clang++-19 libsodium-dev llvm-19-tools -q -y
+        && apt-get install cmake clang++-19 libsodium-dev llvm-19-tools git -q -y
         && ln -s /usr/bin/FileCheck-19 /usr/bin/FileCheck
         && ln -s /usr/lib/llvm-19/build/utils/lit/lit.py /usr/bin/lit
 
@@ -114,7 +81,7 @@ jobs:
     - name: Install cmake and static analyzers
       run: >-
         apt-get update
-        && apt-get install clang-tidy-19 clang-19 cppcheck cmake libsodium-dev llvm-19-tools -y -q
+        && apt-get install clang-tidy-19 clang-19 cppcheck cmake libsodium-dev llvm-19-tools git -y -q
         && ln -s /usr/bin/FileCheck-19 /usr/bin/FileCheck
         && ln -s /usr/lib/llvm-19/build/utils/lit/lit.py /usr/bin/lit
 
@@ -135,38 +102,3 @@ jobs:
       working-directory: build
       run: ctest --output-on-failure --no-tests=error -C Release -j 2
 
-  docs:
-    # Deploy docs only when builds succeed
-    needs: [sanitize, test]
-
-    runs-on: ubuntu-22.04
-
-    if: github.ref == 'refs/heads/main'
-      && github.event_name == 'push'
-      && github.repository_owner == 'friendlyanon'
-
-    permissions:
-      contents: write
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - uses: actions/setup-python@v5
-      with: { python-version: "3.12" }
-
-    - name: Install m.css dependencies
-      run: pip3 install jinja2 Pygments
-
-    - name: Install Doxygen
-      run: sudo apt-get update -q
-        && sudo apt-get install doxygen cmake -q -y
-
-    - name: Build docs
-      run: cmake "-DPROJECT_SOURCE_DIR=$PWD" "-DPROJECT_BINARY_DIR=$PWD/build"
-        -P cmake/docs-ci.cmake
-
-    - name: Deploy docs
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: build/docs/html
