@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <filesystem>
+#include <format>
 #include <memory>
 #include <optional>
 #include <print>
@@ -38,10 +39,8 @@ auto main(int argc, char** argv) -> int
     }
     return std::filesystem::path(xdg_config_home_raw);
   }();
-  // key_path_t keypath {xdg_data_home / "diaria"};
-  // repo_path_t entrypath(xdg_data_home / "diaria" / "entries");
-  key_path_t keypath {"/home/lukas/diaria"};
-  repo_path_t repopath("/home/lukas/diaria/entries");
+  key_path_t keypath {xdg_data_home / "diaria"};
+  repo_path_t repopath(xdg_data_home / "diaria" / "entries");
   const std::filesystem::path configpath(xdg_config_home / "diaria.toml");
   app.add_flag_callback(
       "-V,--version",

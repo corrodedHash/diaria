@@ -103,6 +103,7 @@ auto create_entry_interactive(std::string_view cmdline)
         argv.push_back(temp_entry_path.data());
         continue;
       }
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
       argv.push_back(const_cast<char*>(word.data()));
     }
     argv.push_back(nullptr);

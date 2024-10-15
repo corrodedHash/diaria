@@ -98,21 +98,21 @@ auto asymdec(array_to_const_span_t<private_key_t> key,
   return output;
 }
 
-auto encrypt(array_to_const_span_t<symkey_t> symkey,
-             array_to_const_span_t<public_key_t> pubkey,
+auto encrypt(symkey_span_t symkey,
+             public_key_span_t pubkey,
              std::span<const unsigned char> plaintext)
     -> std::vector<unsigned char>
 {
-  auto asymmetric_encrypted = asymenc(pubkey, plaintext);
-  auto symmetric_encrypted = symenc(symkey, asymmetric_encrypted);
+  auto asymmetric_encrypted = asymenc(pubkey.element, plaintext);
+  auto symmetric_encrypted = symenc(symkey.element, asymmetric_encrypted);
   return symmetric_encrypted;
 }
-auto decrypt(array_to_const_span_t<symkey_t> symkey,
-             array_to_const_span_t<private_key_t> private_key,
+auto decrypt(symkey_span_t symkey,
+             private_key_span_t private_key,
              std::span<const unsigned char> ciphertext)
     -> std::vector<unsigned char>
 {
-  auto symmetric_decrypted = symdec(symkey, ciphertext);
-  auto asymmetric_decrypted = asymdec(private_key, symmetric_decrypted);
+  auto symmetric_decrypted = symdec(symkey.element, ciphertext);
+  auto asymmetric_decrypted = asymdec(private_key.element, symmetric_decrypted);
   return asymmetric_decrypted;
 }

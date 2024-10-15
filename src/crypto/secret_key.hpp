@@ -28,6 +28,20 @@ using public_key_t =
                crypto_box_curve25519xchacha20poly1305_PUBLICKEYBYTES>;
 using symkey_t =
     std::array<unsigned char, crypto_secretbox_xchacha20poly1305_KEYBYTES>;
+
+struct symkey_span_t
+{
+  array_to_const_span_t<symkey_t> element;
+};
+struct public_key_span_t
+{
+  array_to_const_span_t<public_key_t> element;
+};
+struct private_key_span_t
+{
+  array_to_const_span_t<private_key_t> element;
+};
+
 using salt_t =
     std::array<unsigned char, crypto_pwhash_scryptsalsa208sha256_SALTBYTES>;
 using encrypted_private_key_t =
@@ -51,12 +65,16 @@ private:
   serialized_key_t serialized_key;
 
 public:
-  [[nodiscard]] auto get_serialized_key() const -> serialized_key_t { return serialized_key; }
+  [[nodiscard]] auto get_serialized_key() const -> serialized_key_t
+  {
+    return serialized_key;
+  }
   static auto store(array_to_const_span_t<private_key_t> secret_key,
                     std::string_view password) -> stored_secret_key;
   explicit stored_secret_key(serialized_key_t data)
       : serialized_key(data)
   {
   }
-  [[nodiscard]] auto extract_key(std::string_view password) const -> private_key_t;
+  [[nodiscard]] auto extract_key(std::string_view password) const
+      -> private_key_t;
 };
