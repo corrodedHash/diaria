@@ -1,5 +1,6 @@
 #include <array>
 #include <chrono>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -32,7 +33,6 @@
 #include "common.hpp"
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
-#include "mmap_file.hpp"
 
 void setup_db(const key_path_t& keypath)
 {
@@ -91,9 +91,10 @@ auto build_argv(std::string_view cmdline)
 }
 
 auto create_entry_interactive(std::string_view cmdline)
+    -> std::vector<unsigned char>
 {
   std::string temp_entry_path("/tmp/diaria_XXXXXX");
-  owned_fd entry_fd(mkostemp(temp_entry_path.data(), O_CLOEXEC));
+  int entry_fd(mkostemp(temp_entry_path.data(), O_CLOEXEC));
   auto child_pid = fork();
   if (child_pid == 0) {
     const auto words = build_argv(cmdline);
@@ -112,10 +113,25 @@ auto create_entry_interactive(std::string_view cmdline)
 
   int child_status {};
   waitpid(child_pid, &child_status, 0);
-  unlink(temp_entry_path.c_str());
+  constexpr std::size_t buffersize = 512;
+  std::array<unsigned char, buffersize> mybuffer{};
 
-  return std::pair<owned_fd, owned_mmap>(std::move(entry_fd),
-                                         owned_mmap(entry_fd));
+  ssize_t bytesread = 1;
+  std::vector<unsigned char> contents {};
+
+  while ((bytesread = read(entry_fd, mybuffer.data(), mybuffer.size())) > 0) {
+    contents.insert(
+        contents.end(), mybuffer.begin(), mybuffer.begin() + bytesread);
+  }
+  if (bytesread < 0) {
+    std::print(
+        stderr,
+        "Error reading diary file. Unencrypted entry is still stored at {}",
+        temp_entry_path);
+    throw std::runtime_error("Could not read diary entry file");
+  }
+  unlink(temp_entry_path.c_str());
+  return contents;
 }
 
 auto get_iso_timestamp_utc() -> std::string
@@ -157,11 +173,7 @@ void add_entry(const key_path_t& keypath,
     return std::optional(contents);
   };
   const auto load_interactive_file = [&cmdline]()
-  {
-    const auto [_, s] = create_entry_interactive(cmdline);
-    return std::optional(
-        std::vector(std::begin(s.get_span()), std::end(s.get_span())));
-  };
+  { return std::optional(create_entry_interactive(cmdline)); };
   const auto plaintext = maybe_input_file.and_then(load_input_file)
                              .or_else(load_interactive_file)
                              .value();

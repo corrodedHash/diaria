@@ -5,6 +5,7 @@
 
 #include "crypto/entry.hpp"
 
+#include "common.hpp"
 #include "crypto/secret_key.hpp"
 #include "util.hpp"
 auto main() -> int
@@ -15,8 +16,7 @@ auto main() -> int
 
   auto important_data = "This is a secret message"sv;
   auto important_data_span = std::span<const unsigned char>(
-      reinterpret_cast<const unsigned char*>(important_data.data()),
-      important_data.size());
+      make_unsigned_char(important_data.data()), important_data.size());
   auto enc = encrypt(
       symkey_span_t {symkey}, public_key_span_t {pk}, important_data_span);
   auto dec = decrypt(symkey_span_t {symkey}, private_key_span_t {sk}, enc);

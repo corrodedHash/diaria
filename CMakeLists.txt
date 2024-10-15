@@ -19,7 +19,7 @@ add_subdirectory(src)
 
 # ---- Declare executable ----
 
-add_executable(executable_exe src/main.cpp src/mmap_file.cpp)
+add_executable(executable_exe src/main.cpp)
 add_executable(executable::exe ALIAS executable_exe)
 
 set_property(TARGET executable_exe PROPERTY OUTPUT_NAME diaria)

@@ -83,11 +83,13 @@ auto main(int argc, char** argv) -> int
         return true;
       },
       "Non-interactively add an entry");
-  subcom_add->add_option(
-      "--editor",
-      cmdline,
-      "Use the editor commandline. Write a % separated by a space for the "
-      "temporary file which will be written.");
+  subcom_add
+      ->add_option(
+          "--editor",
+          cmdline,
+          "Use the editor commandline. Write a % separated by a space for the "
+          "temporary file which will be written.")
+      ->default_str(cmdline);
   subcom_add->final_callback(
       [&keypath, &repopath, &cmdline, &input_path]()
       { add_entry(keypath, repopath.repo, cmdline, input_path); });

@@ -1,3 +1,2 @@
-# RUN: sh %s | tee %t
+# RUN: sh -c "$DIARIA --help"
 # Test that executable can be found
-$DIARIA --help

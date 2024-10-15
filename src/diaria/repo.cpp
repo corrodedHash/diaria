@@ -67,6 +67,7 @@ void load_repo(const key_path_t& keypath,
 {
   const auto pubkey = load_pubkey(keypath.get_pubkey_path());
   const auto symkey = load_symkey(keypath.get_symkey_path());
+  std::filesystem::create_directories(repo.repo);
 
   for (const auto& entry : std::filesystem::directory_iterator(source)
            | views::filter([](auto entry) { return entry.is_regular_file(); }))
