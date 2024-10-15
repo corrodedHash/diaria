@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <print>
 #include <string>
 
 #include <CLI11/CLI11.hpp>
@@ -11,6 +12,7 @@
 #include "diaria/commands.hpp"
 #include "diaria/repo.hpp"
 #include "diaria/util.hpp"
+#include "project_info.hpp"
 
 auto main(int argc, char** argv) -> int
 {
@@ -41,26 +43,34 @@ auto main(int argc, char** argv) -> int
   key_path_t keypath {"/home/lukas/diaria"};
   repo_path_t repopath("/home/lukas/diaria/entries");
   const std::filesystem::path configpath(xdg_config_home / "diaria.toml");
-
-  app.add_option(
-      "--entries",
-      [&repopath](auto paths)
+  app.add_flag_callback(
+      "-V,--version",
+      []()
       {
-        const auto read_path = paths.at(0);
-        repopath = repo_path_t(read_path);
-        return true;
-      },
-      "Path to the entry repository");
-  app.add_option(
-      "--keys",
-      [&keypath](auto paths)
-      {
-        const auto read_path = paths.at(0);
-        keypath.root = read_path;
-        return true;
-      },
-      "Path to the entry repository");
-  app.set_config("--config", configpath.generic_string());
+        const auto version_string = std::format(
+            "{}.{}.{}", version::major, version::minor, version::patch);
+        std::print("Diaria {}\n", version_string);
+        std::exit(0);
+      });
+  app.add_option("-e,--entries",
+                 [&repopath](auto paths)
+                 {
+                   const auto read_path = paths.at(0);
+                   repopath = repo_path_t(read_path);
+                   return true;
+                 })
+      ->description("Path to the entry repository")
+      ->default_str(repopath.repo);
+  app.add_option("-k,--keys",
+                 [&keypath](auto paths)
+                 {
+                   const auto read_path = paths.at(0);
+                   keypath.root = read_path;
+                   return true;
+                 })
+      ->description("Path to the entry repository")
+      ->default_str(keypath.root);
+  app.set_config("-c,--config", configpath.generic_string());
   app.add_subcommand("init", "Initialize the diaria database on this system")
       ->final_callback([&keypath]() { setup_db(keypath); });
   auto* subcom_add = app.add_subcommand("add", "Add a new diary entry");

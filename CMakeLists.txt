@@ -10,6 +10,8 @@ project(
     LANGUAGES CXX
 )
 
+configure_file(src/project_info.hpp.in generated/project_info.hpp @ONLY)
+
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
@@ -25,7 +27,8 @@ set_property(TARGET executable_exe PROPERTY OUTPUT_NAME diaria)
 target_compile_features(executable_exe PRIVATE cxx_std_23)
 
 target_link_libraries(executable_exe PRIVATE crypto_lib diaria_lib)
-target_include_directories(executable_exe SYSTEM PRIVATE ${CMAKE_SOURCE_DIR}/external)
+target_include_directories(executable_exe SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/external)
+target_include_directories(executable_exe PRIVATE ${PROJECT_BINARY_DIR}/generated)
 
 # ---- Install rules ----
 
