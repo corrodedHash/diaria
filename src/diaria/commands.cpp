@@ -9,6 +9,7 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <iterator>
 #include <optional>
 #include <print>
 #include <ranges>
@@ -17,6 +18,8 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <utility>
+#include <vector>
 
 #include "./commands.hpp"
 

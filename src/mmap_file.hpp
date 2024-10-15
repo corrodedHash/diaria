@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <format>
 #include <span>  // For std::span
 #include <stdexcept>
 

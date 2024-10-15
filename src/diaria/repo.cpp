@@ -1,15 +1,17 @@
 #include <cstdlib>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <ios>
+#include <iterator>
 #include <print>
 #include <ranges>
 #include <stdexcept>
 #include <string_view>
+#include <vector>
 
 #include "./repo.hpp"
 
-#include <fcntl.h>
 
 #include "./util.hpp"
 #include "common.hpp"
