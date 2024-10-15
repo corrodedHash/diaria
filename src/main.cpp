@@ -1,9 +1,9 @@
 #include <cstdlib>
 #include <expected>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
-#include <filesystem>
 
 #include <pwd.h>
 
@@ -39,15 +39,15 @@ auto main(int argc, char** argv) -> int
   // key_path_t keypath {xdg_data_home / "diaria"};
   // repo_path_t entrypath(xdg_data_home / "diaria" / "entries");
   key_path_t keypath {"/home/lukas/diaria"};
-  repo_path_t entrypath("/home/lukas/diaria/entries");
+  repo_path_t repopath("/home/lukas/diaria/entries");
   const std::filesystem::path configpath(xdg_config_home / "diaria.toml");
 
   app.add_option(
       "--entries",
-      [&entrypath](auto paths)
+      [&repopath](auto paths)
       {
         const auto read_path = paths.at(0);
-        entrypath = repo_path_t(read_path);
+        repopath = repo_path_t(read_path);
         return true;
       },
       "Path to the entry repository");
@@ -80,14 +80,14 @@ auto main(int argc, char** argv) -> int
       "Use the editor commandline. Write a % separated by a space for the "
       "temporary file which will be written.");
   subcom_add->final_callback(
-      [&keypath, &entrypath, &cmdline, &input_path]()
-      { add_entry(keypath, entrypath.repo, cmdline, input_path); });
-  std::filesystem::path entry_path {};
+      [&keypath, &repopath, &cmdline, &input_path]()
+      { add_entry(keypath, repopath.repo, cmdline, input_path); });
+  std::filesystem::path read_entry_path {};
   CLI::App* subcom_read =
       app.add_subcommand("read", "Read a diary entry")
-          ->final_callback([&keypath, &entry_path]()
-                           { read_entry(keypath, entry_path); });
-  subcom_read->add_option("path", entry_path, "Path to entry")
+          ->final_callback([&keypath, &read_entry_path]()
+                           { read_entry(keypath, read_entry_path); });
+  subcom_read->add_option("path", read_entry_path, "Path to entry")
       ->check(CLI::ExistingFile)
       ->required();
   auto subcom_repo =
@@ -107,16 +107,19 @@ auto main(int argc, char** argv) -> int
                                "Directory to store the cleartext entries in");
 
   subcom_repo_dump->final_callback(
-      [&keypath, &entrypath, &dumped_repo_path]()
+      [&keypath, &repopath, &dumped_repo_path]()
       {
         const auto password = read_password();
-        dump_repo(key_path_t {keypath}, entrypath, dumped_repo_path, password);
+        dump_repo(key_path_t {keypath}, repopath, dumped_repo_path, password);
       });
   subcom_repo_load->final_callback(
-      [&keypath, &entrypath, &dumped_repo_path]()
-      { load_repo(key_path_t {keypath}, entrypath, dumped_repo_path); });
+      [&keypath, &repopath, &dumped_repo_path]()
+      { load_repo(key_path_t {keypath}, repopath, dumped_repo_path); });
   app.add_subcommand(subcom_repo);
 
+  CLI::App* subcom_repo_sync = subcom_repo->add_subcommand(
+      "sync", "Synchronize repository with configured remote server");
+  subcom_repo_sync->final_callback([&repopath]() { sync_repo(repopath); });
   CLI11_PARSE(app, argc, argv);
   return 0;
 }

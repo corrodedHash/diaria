@@ -16,3 +16,5 @@ void dump_repo(const key_path_t& keypath,
 void load_repo(const key_path_t& keypath,
                const repo_path_t& repo,
                const std::filesystem::path& source);
+
+void sync_repo(const repo_path_t& repo);

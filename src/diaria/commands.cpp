@@ -132,34 +132,31 @@ void add_entry(const key_path_t& keypath,
                std::string_view cmdline,
                std::optional<std::filesystem::path> maybe_input_file)
 {
-  const auto file_span =
-      maybe_input_file
-          .and_then(
-              [&](auto input_file)
-              {
-                std::ifstream stream(input_file,
-                                     std::ios::in | std::ios::binary);
-                if (stream.fail()) {
-                  throw std::runtime_error("Could not open input file");
-                }
-                std::vector<unsigned char> contents(
-                    (std::istreambuf_iterator<char>(stream)),
-                    std::istreambuf_iterator<char>());
-                return std::optional(contents);
-              })
-          .or_else(
-              [&]()
-              {
-                const auto [_, s] = create_entry_interactive(cmdline);
-                return std::optional(std::vector(std::begin(s.get_span()),
-                                                 std::end(s.get_span())));
-              })
-          .value();
+  const auto load_input_file = [](const std::filesystem::path& input_file)
+  {
+    std::ifstream stream(input_file, std::ios::in | std::ios::binary);
+    if (stream.fail()) {
+      throw std::runtime_error("Could not open input file");
+    }
+    std::vector<unsigned char> contents(
+        (std::istreambuf_iterator<char>(stream)),
+        std::istreambuf_iterator<char>());
+    return std::optional(contents);
+  };
+  const auto load_interactive_file = [&cmdline]()
+  {
+    const auto [_, s] = create_entry_interactive(cmdline);
+    return std::optional(
+        std::vector(std::begin(s.get_span()), std::end(s.get_span())));
+  };
+  const auto plaintext = maybe_input_file.and_then(load_input_file)
+                             .or_else(load_interactive_file)
+                             .value();
 
   const auto symkey = load_symkey(keypath.get_symkey_path());
   const auto pubkey = load_pubkey(keypath.get_pubkey_path());
 
-  const auto encrypted = encrypt(symkey, pubkey, file_span);
+  const auto encrypted = encrypt(symkey, pubkey, plaintext);
   const auto file_name =
       entrypath / std::format("{}.diaria", get_iso_timestamp_utc());
   std::filesystem::create_directories(entrypath);

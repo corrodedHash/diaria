@@ -1,7 +1,10 @@
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <print>
 #include <ranges>
+#include <stdexcept>
 #include <string_view>
 
 #include "./repo.hpp"
@@ -29,8 +32,9 @@ void dump_repo(const key_path_t& keypath,
            | std::ranges::views::filter([](auto entry)
                                         { return entry.is_regular_file(); })
            | std::ranges::views::filter(
-               [](auto entry)
-               { return entry.path().filename().string().ends_with(".diaria"); }))
+               [](auto entry) {
+                 return entry.path().filename().string().ends_with(".diaria");
+               }))
   {
     const owned_fd entry_fd(entry);
     const owned_mmap file_span(entry_fd);
@@ -68,4 +72,27 @@ void load_repo(const key_path_t& keypath,
     entry_file.write(make_signed_char(decrypted.data()),
                      static_cast<std::streamsize>(decrypted.size()));
   }
+}
+
+void sync_repo_git(const repo_path_t& repo)
+{
+  auto workingdir = std::filesystem::current_path();
+  std::filesystem::current_path(repo.repo);
+  system("git add *.diaria");
+  system("git push");
+  system("git pull");
+  std::filesystem::current_path(workingdir);
+}
+
+void sync_repo(const repo_path_t& repo)
+{
+  if (!std::filesystem::exists(repo.repo)) {
+    throw std::runtime_error("Repository does not exist");
+  }
+
+  if (std::filesystem::exists(repo.repo / ".git")) {
+    sync_repo_git(repo);
+    return;
+  }
+  std::print(stderr, "No sync mechanism found in diaria repository. No action");
 }

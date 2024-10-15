@@ -1,4 +1,4 @@
-# RUN: sh %s | tee %t | FileCheck %s
+# RUN: sh %s | tee %t | %{filecheck} %s
 # Test that executable can be found
 TMPDIR=$(mktemp -d)
 # CHECK: Writing keys to
