@@ -73,6 +73,7 @@ void setup_db(const key_path_t& keypath)
 auto build_argv(std::string_view cmdline)
 {
   wordexp_t words {};
+  // NOLINTNEXTLINE(hicpp-signed-bitwise)
   wordexp(cmdline.data(), &words, WRDE_NOCMD | WRDE_UNDEF | WRDE_SHOWERR);
 
   const auto word_span = std::span(words.we_wordv, words.we_wordc);
@@ -99,9 +100,7 @@ auto create_entry_interactive(std::string_view cmdline)
         argv.push_back(temp_entry_path.data());
         continue;
       }
-      char* new_word = static_cast<char*>(malloc(word.length() + 1));
-      strlcpy(new_word, word.data(), word.length() + 1);
-      argv.push_back(new_word);
+      argv.push_back(const_cast<char*>(word.data()));
     }
     argv.push_back(nullptr);
     execvp(argv[0], argv.data());

@@ -14,7 +14,8 @@
 #include "./util.hpp"
 #include "common.hpp"
 #include "crypto/entry.hpp"
-#include "mmap_file.hpp"
+
+namespace views = std::ranges::views;
 
 void dump_repo(const key_path_t& keypath,
                const repo_path_t& repo,
@@ -29,22 +30,30 @@ void dump_repo(const key_path_t& keypath,
 
   for (const auto& entry :
        std::filesystem::directory_iterator(repo.repo)
-           | std::ranges::views::filter([](auto entry)
-                                        { return entry.is_regular_file(); })
-           | std::ranges::views::filter(
+           | views::filter([](auto entry) { return entry.is_regular_file(); })
+           | views::filter(
                [](auto entry) {
                  return entry.path().filename().string().ends_with(".diaria");
                }))
   {
-    const owned_fd entry_fd(entry);
-    const owned_mmap file_span(entry_fd);
+    std::ifstream stream(entry.path(), std::ios::in | std::ios::binary);
+    if (stream.fail()) {
+      throw std::runtime_error("Could not open entry file");
+    }
+    std::vector<unsigned char> contents(
+        (std::istreambuf_iterator<char>(stream)),
+        std::istreambuf_iterator<char>());
 
-    const auto decrypted = decrypt(symkey, private_key, file_span.get_span());
+    const auto decrypted = decrypt(symkey, private_key, contents);
     const auto output_file_name =
         entry.path().filename().replace_extension("txt");
     std::ofstream entry_file(
         (target / output_file_name).c_str(),
         std::ios::out | std::ios::binary | std::ios::trunc);
+    if (entry_file.fail()) {
+      throw std::runtime_error(std::format("Could not open output file: {}",
+                                           output_file_name.c_str()));
+    }
     entry_file.write(make_signed_char(decrypted.data()),
                      static_cast<std::streamsize>(decrypted.size()));
   }
@@ -57,18 +66,26 @@ void load_repo(const key_path_t& keypath,
   const auto symkey = load_symkey(keypath.get_symkey_path());
 
   for (const auto& entry : std::filesystem::directory_iterator(source)
-           | std::ranges::views::filter([](auto entry)
-                                        { return entry.is_regular_file(); }))
+           | views::filter([](auto entry) { return entry.is_regular_file(); }))
   {
-    const owned_fd entry_fd(entry);
-    const owned_mmap file_span(entry_fd);
+    std::ifstream stream(entry.path(), std::ios::in | std::ios::binary);
+    if (stream.fail()) {
+      throw std::runtime_error("Could not open entry file");
+    }
+    std::vector<unsigned char> contents(
+        (std::istreambuf_iterator<char>(stream)),
+        std::istreambuf_iterator<char>());
 
-    const auto decrypted = encrypt(symkey, pubkey, file_span.get_span());
+    const auto decrypted = encrypt(symkey, pubkey, contents);
     const auto output_file_name =
         entry.path().filename().replace_extension("diaria");
     std::ofstream entry_file(
         (repo.repo / output_file_name).c_str(),
         std::ios::out | std::ios::binary | std::ios::trunc);
+    if (entry_file.fail()) {
+      throw std::runtime_error(std::format("Could not open output file: {}",
+                                           output_file_name.c_str()));
+    }
     entry_file.write(make_signed_char(decrypted.data()),
                      static_cast<std::streamsize>(decrypted.size()));
   }
@@ -78,10 +95,13 @@ void sync_repo_git(const repo_path_t& repo)
 {
   auto workingdir = std::filesystem::current_path();
   std::filesystem::current_path(repo.repo);
-  system("git add *.diaria");
-  system("git commit -m \"Added entry\"");
-  system("git push");
-  system("git pull");
+  // NOLINTBEGIN(cert-env33-c)
+  // TODO: Use libgit2 maybe, or drop git synchronization for something more fit to the task
+  std::system("git add *.diaria");
+  std::system("git commit -m \"Added entry\"");
+  std::system("git push");
+  std::system("git pull");
+  // NOLINTEND(cert-env33-c)
   std::filesystem::current_path(workingdir);
 }
 
