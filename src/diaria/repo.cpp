@@ -12,10 +12,10 @@
 
 #include "./repo.hpp"
 
-
 #include "./util.hpp"
 #include "common.hpp"
 #include "crypto/entry.hpp"
+#include "crypto/secret_key.hpp"
 
 namespace views = std::ranges::views;
 
@@ -46,7 +46,8 @@ void dump_repo(const key_path_t& keypath,
         (std::istreambuf_iterator<char>(stream)),
         std::istreambuf_iterator<char>());
 
-    const auto decrypted = decrypt(symkey, private_key, contents);
+    const auto decrypted = decrypt(
+        symkey_span_t {symkey}, private_key_span_t {private_key}, contents);
     const auto output_file_name =
         entry.path().filename().replace_extension("txt");
     std::ofstream entry_file(
@@ -78,7 +79,8 @@ void load_repo(const key_path_t& keypath,
         (std::istreambuf_iterator<char>(stream)),
         std::istreambuf_iterator<char>());
 
-    const auto decrypted = encrypt(symkey, pubkey, contents);
+    const auto decrypted =
+        encrypt(symkey_span_t {symkey}, public_key_span_t {pubkey}, contents);
     const auto output_file_name =
         entry.path().filename().replace_extension("diaria");
     std::ofstream entry_file(
@@ -98,7 +100,8 @@ void sync_repo_git(const repo_path_t& repo)
   auto workingdir = std::filesystem::current_path();
   std::filesystem::current_path(repo.repo);
   // NOLINTBEGIN(cert-env33-c)
-  // TODO: Use libgit2 maybe, or drop git synchronization for something more fit to the task
+  // TODO: Use libgit2 maybe, or drop git synchronization for something more fit
+  // to the task
   std::system("git add *.diaria");
   std::system("git commit -m \"Added entry\"");
   std::system("git push");

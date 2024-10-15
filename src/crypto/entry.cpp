@@ -14,8 +14,7 @@
 
 #include "crypto/secret_key.hpp"
 
-auto symenc(array_to_const_span_t<symkey_t> key,
-            std::span<const unsigned char> plaintext)
+auto symenc(symkey_span_t key, std::span<const unsigned char> plaintext)
     -> std::vector<unsigned char>
 {
   std::array<unsigned char, crypto_secretbox_xchacha20poly1305_NONCEBYTES>
@@ -34,7 +33,7 @@ auto symenc(array_to_const_span_t<symkey_t> key,
                                               plaintext.data(),
                                               plaintext.size(),
                                               nonce.data(),
-                                              key.data())
+                                              key.element.data())
       != 0)
   {
     throw std::invalid_argument("Symmetric encryption failed");
@@ -42,8 +41,7 @@ auto symenc(array_to_const_span_t<symkey_t> key,
   return output;
 }
 
-auto symdec(array_to_const_span_t<symkey_t> key,
-            std::span<const unsigned char> ciphertext)
+auto symdec(symkey_span_t key, std::span<const unsigned char> ciphertext)
     -> std::vector<unsigned char>
 {
   auto nonce = std::ranges::subrange(
@@ -54,8 +52,11 @@ auto symdec(array_to_const_span_t<symkey_t> key,
       ciphertext.end());
   auto plaintext = std::vector<unsigned char>(
       text.size() - crypto_secretbox_xchacha20poly1305_MACBYTES);
-  if (crypto_secretbox_xchacha20poly1305_open_easy(
-          plaintext.data(), text.data(), text.size(), nonce.data(), key.data())
+  if (crypto_secretbox_xchacha20poly1305_open_easy(plaintext.data(),
+                                                   text.data(),
+                                                   text.size(),
+                                                   nonce.data(),
+                                                   key.element.data())
       != 0)
   {
     throw std::invalid_argument("Symmetric decryption failed");
@@ -63,14 +64,13 @@ auto symdec(array_to_const_span_t<symkey_t> key,
   return plaintext;
 }
 
-auto asymenc(array_to_const_span_t<public_key_t> key,
-             std::span<const unsigned char> plaintext)
+auto asymenc(public_key_span_t key, std::span<const unsigned char> plaintext)
     -> std::vector<unsigned char>
 {
   std::vector<unsigned char> output(
       plaintext.size() + crypto_box_curve25519xchacha20poly1305_SEALBYTES, 0);
   if (crypto_box_curve25519xchacha20poly1305_seal(
-          output.data(), plaintext.data(), plaintext.size(), key.data())
+          output.data(), plaintext.data(), plaintext.size(), key.element.data())
       != 0)
   {
     throw std::invalid_argument("Asymmetric encryption failed");
@@ -78,19 +78,18 @@ auto asymenc(array_to_const_span_t<public_key_t> key,
   return output;
 }
 
-auto asymdec(array_to_const_span_t<private_key_t> key,
-             std::span<const unsigned char> ciphertext)
+auto asymdec(private_key_span_t key, std::span<const unsigned char> ciphertext)
     -> std::vector<unsigned char>
 {
   std::vector<unsigned char> output(
       ciphertext.size() - crypto_box_curve25519xchacha20poly1305_SEALBYTES, 0);
   public_key_t pubkey;
-  crypto_scalarmult_base(pubkey.data(), key.data());
+  crypto_scalarmult_base(pubkey.data(), key.element.data());
   if (crypto_box_curve25519xchacha20poly1305_seal_open(output.data(),
                                                        ciphertext.data(),
                                                        ciphertext.size(),
                                                        pubkey.data(),
-                                                       key.data())
+                                                       key.element.data())
       != 0)
   {
     throw std::invalid_argument("Asymmetric decryption failed");
@@ -103,8 +102,8 @@ auto encrypt(symkey_span_t symkey,
              std::span<const unsigned char> plaintext)
     -> std::vector<unsigned char>
 {
-  auto asymmetric_encrypted = asymenc(pubkey.element, plaintext);
-  auto symmetric_encrypted = symenc(symkey.element, asymmetric_encrypted);
+  auto asymmetric_encrypted = asymenc(pubkey, plaintext);
+  auto symmetric_encrypted = symenc(symkey, asymmetric_encrypted);
   return symmetric_encrypted;
 }
 auto decrypt(symkey_span_t symkey,
@@ -112,7 +111,7 @@ auto decrypt(symkey_span_t symkey,
              std::span<const unsigned char> ciphertext)
     -> std::vector<unsigned char>
 {
-  auto symmetric_decrypted = symdec(symkey.element, ciphertext);
-  auto asymmetric_decrypted = asymdec(private_key.element, symmetric_decrypted);
+  auto symmetric_decrypted = symdec(symkey, ciphertext);
+  auto asymmetric_decrypted = asymdec(private_key, symmetric_decrypted);
   return asymmetric_decrypted;
 }

@@ -169,7 +169,8 @@ void add_entry(const key_path_t& keypath,
   const auto symkey = load_symkey(keypath.get_symkey_path());
   const auto pubkey = load_pubkey(keypath.get_pubkey_path());
 
-  const auto encrypted = encrypt(symkey, pubkey, plaintext);
+  const auto encrypted =
+      encrypt(symkey_span_t {symkey}, public_key_span_t {pubkey}, plaintext);
   const auto file_name =
       entrypath / std::format("{}.diaria", get_iso_timestamp_utc());
   std::filesystem::create_directories(entrypath);
@@ -195,6 +196,7 @@ void read_entry(const key_path_t& keypath, const std::filesystem::path& entry)
   const auto password = read_password();
   const auto private_key =
       load_private_key(keypath.get_private_key_path(), password);
-  const auto decrypted = decrypt(symkey, private_key, contents);
+  const auto decrypted = decrypt(
+      symkey_span_t {symkey}, private_key_span_t {private_key}, contents);
   std::print("{}\n", std::string(decrypted.begin(), decrypted.end()));
 }
