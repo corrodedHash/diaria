@@ -16,8 +16,7 @@ auto test_sym()
   auto symkey = generate_symkey();
   auto important_data = "This is a secret message"sv;
   auto important_data_span = std::span<const unsigned char>(
-      make_unsigned_char(important_data.data()),
-      important_data.size());
+      make_unsigned_char(important_data.data()), important_data.size());
   auto enc = symenc(symkey_span_t {symkey}, important_data_span);
   auto dec = symdec(symkey_span_t {symkey}, enc);
   if (!std::ranges::equal(dec, important_data_span)) {
@@ -34,8 +33,7 @@ auto test_asym()
 
   auto important_data = "This is a secret message"sv;
   auto important_data_span = std::span<const unsigned char>(
-      make_unsigned_char(important_data.data()),
-      important_data.size());
+      make_unsigned_char(important_data.data()), important_data.size());
   auto enc = asymenc(public_key_span_t {pk}, important_data_span);
   auto dec = asymdec(private_key_span_t {sk}, enc);
   if (!std::ranges::equal(dec, important_data_span)) {
@@ -53,8 +51,7 @@ auto test_complete()
 
   auto important_data = "This is a secret message"sv;
   auto important_data_span = std::span<const unsigned char>(
-      make_unsigned_char(important_data.data()),
-      important_data.size());
+      make_unsigned_char(important_data.data()), important_data.size());
   auto enc = encrypt(
       symkey_span_t {symkey}, public_key_span_t {pk}, important_data_span);
   auto dec = decrypt(symkey_span_t {symkey}, private_key_span_t {sk}, enc);
@@ -66,7 +63,7 @@ auto test_complete()
   }
 }
 
-auto main() -> int
+auto maiin() -> int
 {
   test_sym();
   test_asym();
