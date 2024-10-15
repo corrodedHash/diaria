@@ -1,33 +1,23 @@
-# ---- Variables ----
-
-# We use variables separate from what CTest uses, because those have
-# customization issues
-set(
-    COVERAGE_TRACE_COMMAND
-    lcov -c -q
-    -o "${PROJECT_BINARY_DIR}/coverage.info"
-    -d "${PROJECT_BINARY_DIR}"
-    --include "${PROJECT_SOURCE_DIR}/*"
-    CACHE STRING
-    "; separated command to generate a trace for the 'coverage' target"
+add_custom_target(
+    coverage_raw
+    COMMAND ${CMAKE_COMMAND} -E rm -Rf -- ${CMAKE_BINARY_DIR}/coverage_raw
+    COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage_raw/coverage.%p.profraw ${CMAKE_CTEST_COMMAND}
+    COMMENT "Testing to generate coverage traces"
 )
 
-set(
-    COVERAGE_HTML_COMMAND
-    genhtml --legend -f -q
-    "${PROJECT_BINARY_DIR}/coverage.info"
-    -p "${PROJECT_SOURCE_DIR}"
-    -o "${PROJECT_BINARY_DIR}/coverage_html"
-    CACHE STRING
-    "; separated command to generate an HTML report for the 'coverage' target"
+add_custom_target(
+    coverage_merge
+    COMMAND sh -c "llvm-profdata merge --sparse ${CMAKE_BINARY_DIR}/coverage_raw/*.profraw -o ${CMAKE_BINARY_DIR}/coverage.profdata"
+    DEPENDS coverage_raw
+    BYPRODUCTS ${CMAKE_BINARY_DIR}/coverage.profdata
+    COMMENT "Merging traces into profile"
 )
-
-# ---- Coverage target ----
 
 add_custom_target(
     coverage
-    COMMAND ${COVERAGE_TRACE_COMMAND}
-    COMMAND ${COVERAGE_HTML_COMMAND}
+    DEPENDS coverage_merge
+    COMMAND llvm-cov show --format=html ${CMAKE_BINARY_DIR}/diaria --instr-profile ${CMAKE_BINARY_DIR}/coverage.profdata -o ${CMAKE_BINARY_DIR}/coverage_html
+    COMMAND llvm-cov report ${CMAKE_BINARY_DIR}/diaria --instr-profile ${CMAKE_BINARY_DIR}/coverage.profdata
     COMMENT "Generating coverage report"
     VERBATIM
 )

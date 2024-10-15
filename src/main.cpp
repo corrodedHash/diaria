@@ -32,7 +32,7 @@ auto main(int argc, char** argv) -> int
   const auto xdg_config_home = [&]()
   {
     if (xdg_config_home_raw == nullptr) {
-      return homedir / ".local" / "share";
+      return homedir / ".config";
     }
     return std::filesystem::path(xdg_config_home_raw);
   }();

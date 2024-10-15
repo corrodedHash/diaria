@@ -102,3 +102,38 @@ jobs:
       working-directory: build
       run: ctest --output-on-failure --no-tests=error -C Release -j 2
 
+  coverage:
+    # needs: [test]
+
+    runs-on: ubuntu-22.04
+    container: ubuntu:24.10
+    env: { CXX: clang++-19, DEBIAN_FRONTEND: noninteractive }
+
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install LCov
+      run: >- 
+        apt-get update
+        && apt-get install clang-tidy-19 clang-19 cppcheck cmake libsodium-dev llvm-19-tools git llvm nodejs -y -q
+        && ln -s /usr/bin/FileCheck-19 /usr/bin/FileCheck
+        && ln -s /usr/lib/llvm-19/build/utils/lit/lit.py /usr/bin/lit
+
+    - name: Configure
+      run: cmake --preset=ci-coverage
+
+    - name: Build
+      run: cmake --build build/coverage -j 2
+
+    - name: Test
+      working-directory: build/coverage
+      run: ctest --output-on-failure --no-tests=error -j 2
+
+    - name: Process coverage info
+      run: cmake --build build/coverage -t coverage
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: coverage_report
+        path: build/coverage/coverage_html

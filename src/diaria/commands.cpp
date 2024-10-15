@@ -46,18 +46,28 @@ void setup_db(const key_path_t& keypath)
   const auto stored_key = stored_secret_key::store(std::span(sk), password);
   std::ofstream keyfile(keypath.get_private_key_path(),
                         std::ios::out | std::ios::binary | std::ios::trunc);
+  if (keyfile.fail()) {
+    throw std::runtime_error("Could not open keyfile");
+  }
   keyfile.write(
       make_signed_char(stored_key.get_serialized_key().data()),
       static_cast<std::streamsize>(stored_key.get_serialized_key().size()));
 
   std::ofstream pubkeyfile(keypath.get_pubkey_path(),
                            std::ios::out | std::ios::binary | std::ios::trunc);
+  if (pubkeyfile.fail()) {
+    throw std::runtime_error("Could not open pubkeyfile");
+  }
   pubkeyfile.write(make_signed_char(pk.data()),
                    static_cast<std::streamsize>(pk.size()));
 
   std::ofstream symkeyfile(keypath.get_symkey_path(),
                            std::ios::out | std::ios::binary | std::ios::trunc);
+  if (symkeyfile.fail()) {
+    throw std::runtime_error("Could not open symkeyfile");
+  }
   symkeyfile.write(make_signed_char(symkey.data()), symkey.size());
+  std::print("Created key repository at {}\n", keypath.root.c_str());
 }
 
 auto build_argv(std::string_view cmdline)
