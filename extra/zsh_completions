@@ -1,0 +1,32 @@
+#compdef diaria
+compdef _diaria diaria
+
+_diaria() {
+    local -a subcmds
+    subcmds=(
+        'add:Add an entry'
+        'read:Read an entry'
+        'init:Initialize diaria key'
+        'repo:Diary repository based commands'
+        )
+    if (( CURRENT == 2)); then
+        _describe -t commands 'diaria command' subcmds
+    else
+        # cmd="${${subcmds[(r)$words[2]:*]%%:*}}"
+        # case $cmd in
+        # "read")
+        #     _path_files -g "*.diaria" -/
+        #     # _describe 'command' ('b:q' 'd:a')
+        # ;;
+        # *)
+        # echo $cmd
+        # ;;
+        # esac
+    fi
+
+}
+
+# don't run the completion function when being source-ed or eval-ed
+if [ "$funcstack[1]" = "_diaria" ]; then
+    _diaria
+fi
