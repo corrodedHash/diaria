@@ -34,7 +34,7 @@
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
 
-void setup_db(const key_path_t& keypath)
+void setup_db(const key_repo_t& keypath)
 {
   const auto [pk, sk] = generate_keypair();
   const auto symkey = generate_symkey();
@@ -45,7 +45,10 @@ void setup_db(const key_path_t& keypath)
     throw std::runtime_error(std::format("Could not create directories: {}",
                                          dir_creation_error.message()));
   };
-  const auto password = read_password();
+  const auto password =
+      keypath.private_key_password
+          .or_else([]() { return std::optional(read_password()); })
+          .value();
   const auto stored_key = stored_secret_key::store(std::span(sk), password);
   std::ofstream keyfile(keypath.get_private_key_path(),
                         std::ios::out | std::ios::binary | std::ios::trunc);
@@ -156,7 +159,7 @@ auto get_iso_timestamp_utc() -> std::string
                      utc_tm.tm_sec);
 }
 
-void add_entry(const key_path_t& keypath,
+void add_entry(const key_repo_t& keypath,
                const std::filesystem::path& entrypath,
                std::string_view cmdline,
                std::optional<std::filesystem::path> maybe_input_file)
@@ -195,7 +198,7 @@ void add_entry(const key_path_t& keypath,
                    static_cast<std::streamsize>(encrypted.size()));
 }
 
-void read_entry(const key_path_t& keypath,
+void read_entry(const key_repo_t& keypath,
                 const std::filesystem::path& entry,
                 const std::optional<std::filesystem::path>& output)
 {
@@ -207,7 +210,11 @@ void read_entry(const key_path_t& keypath,
                                       std::istreambuf_iterator<char>());
   const auto symkey = load_symkey(keypath.get_symkey_path());
 
-  const auto password = read_password();
+  const auto password =
+      keypath.private_key_password
+          .or_else([]() { return std::optional(read_password()); })
+          .value();
+  ;
   const auto private_key =
       load_private_key(keypath.get_private_key_path(), password);
   const auto decrypted = decrypt(

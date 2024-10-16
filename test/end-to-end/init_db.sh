@@ -3,7 +3,7 @@
 TMPDIR=$(mktemp -d)
 # CHECK: Writing keys to
 echo Writing keys to $TMPDIR
-echo abc | $DIARIA --keys $TMPDIR init
+$DIARIA -p abc --keys $TMPDIR init
 
 ENTRY_COUNT=$(ls -1 $TMPDIR | wc)
 # CHECK: Number of entries: 3

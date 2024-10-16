@@ -3,7 +3,7 @@
 TMPDIR=$(mktemp -d)
 # CHECK: Writing keys to
 echo Writing keys to $TMPDIR/keys
-echo abc | $DIARIA --keys $TMPDIR/keys init
+$DIARIA -p abc --keys $TMPDIR/keys init
 
 mkdir -p $TMPDIR/entries
 $DIARIA --keys $TMPDIR/keys --entries $TMPDIR/entries add --input "/dev/null/nonexistent"

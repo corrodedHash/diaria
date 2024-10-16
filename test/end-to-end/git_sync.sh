@@ -11,7 +11,7 @@ BARE_REPO=$(mktemp -d)
 create_keys() {
     # CHECK: Writing keys to
     echo Writing keys to $TMPDIR/keys
-    echo abc | $DIARIA  init
+    $DIARIA -p abc  init
 
     KEY_ENTRY_COUNT=$(ls -1 "$TMPDIR/keys" | wc -l)
     # CHECK: Number of key entries: 3
@@ -84,4 +84,4 @@ $RECV_DIARIA repo sync || exit 1
 
 
 #CHECK: [[ENTRYTEXT]]
-echo abc | $RECV_DIARIA read $(find $TMPDIR/entries -name '*.diaria') || exit 1
+$RECV_DIARIA -p abc read $(find $TMPDIR/entries -name '*.diaria') || exit 1

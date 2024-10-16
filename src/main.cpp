@@ -1,9 +1,11 @@
 #include <cstdlib>
 #include <filesystem>
 #include <format>
+#include <fstream>
 #include <memory>
 #include <optional>
 #include <print>
+#include <stdexcept>
 #include <string>
 
 #include <CLI11/CLI11.hpp>
@@ -39,7 +41,8 @@ auto main(int argc, char** argv) -> int
     }
     return std::filesystem::path(xdg_config_home_raw);
   }();
-  key_path_t keypath {xdg_data_home / "diaria"};
+  key_repo_t keyrepo {.root = xdg_data_home / "diaria",
+                      .private_key_password = std::nullopt};
   repo_path_t repopath(xdg_data_home / "diaria" / "entries");
   const std::filesystem::path configpath(xdg_config_home / "diaria.toml");
   app.add_flag_callback(
@@ -61,17 +64,39 @@ auto main(int argc, char** argv) -> int
       ->description("Path to the entry repository")
       ->default_str(repopath.repo);
   app.add_option("-k,--keys",
-                 [&keypath](auto paths)
+                 [&keyrepo](auto paths)
                  {
                    const auto read_path = paths.at(0);
-                   keypath.root = read_path;
+                   keyrepo.root = read_path;
                    return true;
                  })
       ->description("Path to the entry repository")
-      ->default_str(keypath.root);
+      ->default_str(keyrepo.root);
+  app.add_option("-p,--password",
+                 [&keyrepo](auto paths)
+                 {
+                   const auto read_password = paths.at(0);
+                   keyrepo.private_key_password = read_password;
+                   return true;
+                 })
+      ->description("Password for unlocking the private key.");
+  app.add_option("--password_file",
+                 [&keyrepo](auto paths)
+                 {
+                   const auto read_password = paths.at(0);
+                   std::ifstream password_file(read_password);
+                   if (password_file.fail()) {
+                     throw std::runtime_error("Could not open password file");
+                   }
+                   std::string password {};
+                   std::getline(password_file, password);
+                   keyrepo.private_key_password = std::optional(password);
+                   return true;
+                 })
+      ->description("File to read for the password to unlock the private key.");
   app.set_config("-c,--config", configpath.generic_string());
   app.add_subcommand("init", "Initialize the diaria database on this system")
-      ->final_callback([&keypath]() { setup_db(keypath); });
+      ->final_callback([&keyrepo]() { setup_db(keyrepo); });
   auto* subcom_add = app.add_subcommand("add", "Add a new diary entry");
   std::optional<std::filesystem::path> input_path {};
   std::string cmdline {"vim %"};
@@ -91,15 +116,15 @@ auto main(int argc, char** argv) -> int
           "temporary file which will be written.")
       ->default_str(cmdline);
   subcom_add->final_callback(
-      [&keypath, &repopath, &cmdline, &input_path]()
-      { add_entry(keypath, repopath.repo, cmdline, input_path); });
+      [&keyrepo, &repopath, &cmdline, &input_path]()
+      { add_entry(keyrepo, repopath.repo, cmdline, input_path); });
   std::filesystem::path read_entry_path {};
   std::optional<std::filesystem::path> read_output {};
   CLI::App* subcom_read =
       app.add_subcommand("read", "Read a diary entry")
           ->final_callback(
-              [&keypath, &read_entry_path, &read_output]()
-              { read_entry(keypath, read_entry_path, read_output); });
+              [&keyrepo, &read_entry_path, &read_output]()
+              { read_entry(keyrepo, read_entry_path, read_output); });
   subcom_read
       ->add_option(
           "-o,--output",
@@ -137,14 +162,17 @@ auto main(int argc, char** argv) -> int
       ->required();
 
   subcom_repo_dump->final_callback(
-      [&keypath, &repopath, &dumped_repo_path]()
+      [&keyrepo, &repopath, &dumped_repo_path]()
       {
-        const auto password = read_password();
-        dump_repo(key_path_t {keypath}, repopath, dumped_repo_path, password);
+        const auto password =
+            keyrepo.private_key_password
+                .or_else([]() { return std::optional(read_password()); })
+                .value();
+        dump_repo(key_repo_t {keyrepo}, repopath, dumped_repo_path, password);
       });
   subcom_repo_load->final_callback(
-      [&keypath, &repopath, &dumped_repo_path]()
-      { load_repo(key_path_t {keypath}, repopath, dumped_repo_path); });
+      [&keyrepo, &repopath, &dumped_repo_path]()
+      { load_repo(key_repo_t {keyrepo}, repopath, dumped_repo_path); });
   app.add_subcommand(subcom_repo);
 
   CLI::App* subcom_repo_sync = subcom_repo->add_subcommand(

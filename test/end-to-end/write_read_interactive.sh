@@ -9,7 +9,7 @@ fi
 TMPDIR=$(mktemp -d)
 # CHECK: Writing keys to
 echo Writing keys to $TMPDIR/keys
-echo abc | $DIARIA --keys "$TMPDIR/keys" init
+$DIARIA -p abc --keys "$TMPDIR/keys" init
 
 KEY_ENTRY_COUNT=$(ls -1 "$TMPDIR/keys" | wc -l)
 # CHECK: Number of key entries: 3
@@ -26,4 +26,4 @@ ls -R $TMPDIR
 echo Number of diary entries: $DIARY_ENTRY_COUNT
 
 #CHECK: [[ENTRYTEXT]]
-echo abc | $DIARIA --keys "$TMPDIR/keys" --entries "$TMPDIR/entries" read $(find $TMPDIR/entries -type f)
+$DIARIA -p abc --keys "$TMPDIR/keys" --entries "$TMPDIR/entries" read $(find $TMPDIR/entries -type f)

@@ -8,16 +8,15 @@
 #include <string_view>
 
 #include "util.hpp"
-#include "common.hpp"
 
+#include <unistd.h>
+
+#include "common.hpp"
 #include "crypto/secret_key.hpp"
 
 auto read_password() -> std::string
 {
-  std::string password;
-  std::print("Enter password: ");
-  std::getline(std::cin, password);
-  return password;
+  return {getpass("Enter password: ")};
 }
 
 auto load_symkey(const std::filesystem::path& file_path) -> symkey_t

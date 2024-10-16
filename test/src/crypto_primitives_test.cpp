@@ -63,7 +63,7 @@ auto test_complete()
   }
 }
 
-auto maiin() -> int
+auto main() -> int
 {
   test_sym();
   test_asym();

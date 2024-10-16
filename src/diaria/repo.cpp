@@ -19,7 +19,7 @@
 
 namespace views = std::ranges::views;
 
-void dump_repo(const key_path_t& keypath,
+void dump_repo(const key_repo_t& keypath,
                const repo_path_t& repo,
                const std::filesystem::path& target,
                std::string_view password)
@@ -61,7 +61,7 @@ void dump_repo(const key_path_t& keypath,
                      static_cast<std::streamsize>(decrypted.size()));
   }
 }
-void load_repo(const key_path_t& keypath,
+void load_repo(const key_repo_t& keypath,
                const repo_path_t& repo,
                const std::filesystem::path& source)
 {
