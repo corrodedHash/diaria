@@ -21,9 +21,5 @@ ls -R $TMPDIR
 # CHECK: Number of diary entries: 1
 echo Number of diary entries: $DIARY_ENTRY_COUNT
 
-#CHECK: [[ENTRYTEXT]]
-$DIARIA -p abc --keys "$TMPDIR/keys" --entries "$TMPDIR/entries" read $(find $TMPDIR/entries -type f)
-# CHECK: Using password file
-echo Using password file
-#CHECK: [[ENTRYTEXT]]
-$DIARIA --password_file <(echo abc) --keys "$TMPDIR/keys" --entries "$TMPDIR/entries" read -o - $(find $TMPDIR/entries -type f)
+$DIARIA -p wrong --keys "$TMPDIR/keys" --entries "$TMPDIR/entries" read $(find $TMPDIR/entries -type f)
+true
