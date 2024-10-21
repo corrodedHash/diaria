@@ -25,6 +25,7 @@
 #include "./commands.hpp"
 
 #include <fcntl.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <wordexp.h>
@@ -97,8 +98,8 @@ auto create_entry_interactive(std::string_view cmdline)
     -> std::vector<unsigned char>
 {
   std::string temp_entry_path("/tmp/diaria_XXXXXX");
-  int entry_fd(mkostemp(temp_entry_path.data(), O_CLOEXEC));
-  auto child_pid = fork();
+  const int entry_fd(mkostemp(temp_entry_path.data(), O_CLOEXEC));
+  const auto child_pid = fork();
   if (child_pid == 0) {
     const auto words = build_argv(cmdline);
     std::vector<char*> argv {};

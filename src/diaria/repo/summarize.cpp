@@ -4,19 +4,28 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <format>
 #include <fstream>
+#include <ios>
+#include <iterator>
 #include <optional>
 #include <print>
 #include <ranges>
 #include <spanstream>
 #include <stdexcept>
+#include <string_view>
+#include <string>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include <bits/chrono.h>
+#include <bits/chrono_io.h>
 
 #include "../repo.hpp"
 #include "crypto/entry.hpp"
+#include "diaria/util.hpp"
+#include "crypto/secret_key.hpp"
 
 using time_point = std::chrono::utc_clock::time_point;
 
