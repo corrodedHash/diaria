@@ -98,14 +98,15 @@ auto main(int argc, char** argv) -> int
   app.add_subcommand("init", "Initialize the diaria database on this system")
       ->final_callback([&keyrepo]() { setup_db(keyrepo); });
   auto* subcom_add = app.add_subcommand("add", "Add a new diary entry");
-  std::optional<std::filesystem::path> input_path {};
-  std::optional<std::filesystem::path> output_path {};
+  std::optional<input_file_t> input_path {};
+  std::optional<output_file_t> output_path {};
   std::string cmdline {"vim %"};
   subcom_add->add_option(
       "-i,--input",
       [&input_path](const auto& input_files)
       {
-        input_path = std::optional(std::filesystem::path(input_files[0]));
+        input_path =
+            std::optional(input_file_t {std::filesystem::path(input_files[0])});
         return true;
       },
       "Non-interactively add an entry");
@@ -113,7 +114,8 @@ auto main(int argc, char** argv) -> int
       "-o,--output",
       [&output_path](const auto& output_files)
       {
-        output_path = std::optional(std::filesystem::path(output_files[0]));
+        output_path = std::optional(
+            output_file_t {std::filesystem::path(output_files[0])});
         return true;
       },
       "Output path of entry file. Leave empty to generate with timestamp.");

@@ -140,35 +140,18 @@ auto create_entry_interactive(std::string_view cmdline)
 
 auto get_iso_timestamp_utc() -> std::string
 {
-  // Get current time in UTC
-  auto now = std::chrono::system_clock::now();
-
-  // Convert to time_t for easy manipulation
-  std::time_t const now_time_t = std::chrono::system_clock::to_time_t(now);
-
-  // Convert time_t to a tm structure for UTC time
-  std::tm utc_tm = *std::gmtime(&now_time_t);
-
-  constexpr int year = 1900;
-  // Format the timestamp using std::format
-  return std::format("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
-                     utc_tm.tm_year + year,
-                     utc_tm.tm_mon + 1,
-                     utc_tm.tm_mday,
-                     utc_tm.tm_hour,
-                     utc_tm.tm_min,
-                     utc_tm.tm_sec);
+  return std::format("{:%FT%H:%M:%S}", std::chrono::system_clock::now());
 }
 
 void add_entry(const key_repo_t& keypath,
                const std::filesystem::path& entrypath,
                std::string_view cmdline,
-               std::optional<std::filesystem::path> maybe_input_file,
-               std::optional<std::filesystem::path> maybe_output_file)
+               const std::optional<input_file_t>& maybe_input_file,
+               const std::optional<output_file_t>& maybe_output_file)
 {
-  const auto load_input_file = [](const std::filesystem::path& input_file)
+  const auto load_input_file = [](const input_file_t& input_file)
   {
-    std::ifstream stream(input_file, std::ios::in | std::ios::binary);
+    std::ifstream stream(input_file.p, std::ios::in | std::ios::binary);
     if (stream.fail()) {
       throw std::runtime_error("Could not open input file");
     }
@@ -191,7 +174,7 @@ void add_entry(const key_repo_t& keypath,
   const auto file_name = [&]()
   {
     if (maybe_output_file.has_value()) {
-      auto output_path = maybe_output_file.value();
+      auto output_path = maybe_output_file.value().p;
       if (output_path.is_absolute()) {
         return output_path;
       }
