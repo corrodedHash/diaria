@@ -3,6 +3,7 @@
 add_library(
     diaria_lib OBJECT
     commands.cpp repo.cpp util.cpp
+    repo/summarize.cpp
 )
 
 target_include_directories(

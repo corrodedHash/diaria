@@ -18,3 +18,8 @@ void load_repo(const key_repo_t& keypath,
                const std::filesystem::path& source);
 
 void sync_repo(const repo_path_t& repo);
+
+void summarize_repo(const key_repo_t& keypath,
+                    const repo_path_t& repo,
+                    std::string_view password,
+                    bool paging);

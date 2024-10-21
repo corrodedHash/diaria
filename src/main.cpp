@@ -99,6 +99,7 @@ auto main(int argc, char** argv) -> int
       ->final_callback([&keyrepo]() { setup_db(keyrepo); });
   auto* subcom_add = app.add_subcommand("add", "Add a new diary entry");
   std::optional<std::filesystem::path> input_path {};
+  std::optional<std::filesystem::path> output_path {};
   std::string cmdline {"vim %"};
   subcom_add->add_option(
       "-i,--input",
@@ -108,6 +109,14 @@ auto main(int argc, char** argv) -> int
         return true;
       },
       "Non-interactively add an entry");
+  subcom_add->add_option(
+      "-o,--output",
+      [&output_path](const auto& output_files)
+      {
+        output_path = std::optional(std::filesystem::path(output_files[0]));
+        return true;
+      },
+      "Output path of entry file. Leave empty to generate with timestamp.");
   subcom_add
       ->add_option(
           "--editor",
@@ -116,8 +125,8 @@ auto main(int argc, char** argv) -> int
           "temporary file which will be written.")
       ->default_str(cmdline);
   subcom_add->final_callback(
-      [&keyrepo, &repopath, &cmdline, &input_path]()
-      { add_entry(keyrepo, repopath.repo, cmdline, input_path); });
+      [&keyrepo, &repopath, &cmdline, &input_path, &output_path]()
+      { add_entry(keyrepo, repopath.repo, cmdline, input_path, output_path); });
   std::filesystem::path read_entry_path {};
   std::optional<std::filesystem::path> read_output {};
   CLI::App* subcom_read =
@@ -178,6 +187,24 @@ auto main(int argc, char** argv) -> int
   CLI::App* subcom_repo_sync = subcom_repo->add_subcommand(
       "sync", "Synchronize repository with configured remote server");
   subcom_repo_sync->final_callback([&repopath]() { sync_repo(repopath); });
+
+  CLI::App* subcom_repo_summarize = subcom_repo->add_subcommand(
+      "summarize",
+      "Show some entries from different time intervals in the past");
+  bool summarize_long {};
+  subcom_repo_summarize->add_flag(
+      "--long",
+      summarize_long,
+      "Do not press enter to advance to next entry, just print everything");
+  subcom_repo_summarize->final_callback(
+      [&keyrepo, &repopath, &summarize_long]()
+      {
+        const auto password =
+            keyrepo.private_key_password
+                .or_else([]() { return std::optional(read_password()); })
+                .value();
+        summarize_repo(keyrepo, repopath, password, !summarize_long);
+      });
   CLI11_PARSE(app, argc, argv);
   return 0;
 }
