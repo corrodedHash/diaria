@@ -1,6 +1,4 @@
 #include <array>
-#include <chrono>
-#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -17,7 +15,6 @@
 #include <span>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <system_error>
 #include <utility>
 #include <vector>
@@ -75,128 +72,6 @@ void setup_db(const key_repo_t& keypath)
   }
   symkeyfile.write(make_signed_char(symkey.data()), symkey.size());
   std::print("Created key repository at {}\n", keypath.root.c_str());
-}
-
-auto build_argv(std::string_view cmdline)
-{
-  wordexp_t words {};
-  // NOLINTNEXTLINE(hicpp-signed-bitwise)
-  wordexp(cmdline.data(), &words, WRDE_NOCMD | WRDE_UNDEF | WRDE_SHOWERR);
-
-  const auto word_span = std::span(words.we_wordv, words.we_wordc);
-  const auto owned_word_span = word_span
-      | std::ranges::views::transform([](auto word)
-                                      { return std::string(word); });
-  std::vector<std::string> result(std::begin(owned_word_span),
-                                  std::end(owned_word_span));
-
-  wordfree(&words);
-  return result;
-}
-
-auto create_entry_interactive(std::string_view cmdline)
-    -> std::vector<unsigned char>
-{
-  std::string temp_entry_path("/tmp/diaria_XXXXXX");
-  const int entry_fd(mkostemp(temp_entry_path.data(), O_CLOEXEC));
-  const auto child_pid = fork();
-  if (child_pid == 0) {
-    const auto words = build_argv(cmdline);
-    std::vector<char*> argv {};
-    for (const auto& word : words) {
-      if (word == "%") {
-        argv.push_back(temp_entry_path.data());
-        continue;
-      }
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-      argv.push_back(const_cast<char*>(word.data()));
-    }
-    argv.push_back(nullptr);
-    execvp(argv[0], argv.data());
-  }
-
-  int child_status {};
-  waitpid(child_pid, &child_status, 0);
-  constexpr std::size_t buffersize = 512;
-  std::array<unsigned char, buffersize> mybuffer {};
-
-  ssize_t bytesread = 1;
-  std::vector<unsigned char> contents {};
-
-  while ((bytesread = read(entry_fd, mybuffer.data(), mybuffer.size())) > 0) {
-    contents.insert(
-        contents.end(), mybuffer.begin(), mybuffer.begin() + bytesread);
-  }
-  if (bytesread < 0) {
-    std::print(
-        stderr,
-        "Error reading diary file. Unencrypted entry is still stored at {}",
-        temp_entry_path);
-    throw std::runtime_error("Could not read diary entry file");
-  }
-  unlink(temp_entry_path.c_str());
-  return contents;
-}
-
-auto get_iso_timestamp_utc() -> std::string
-{
-  return std::format("{:%FT%H:%M:%S}", std::chrono::system_clock::now());
-}
-
-void add_entry(const key_repo_t& keypath,
-               const std::filesystem::path& entrypath,
-               std::string_view cmdline,
-               const std::optional<input_file_t>& maybe_input_file,
-               const std::optional<output_file_t>& maybe_output_file)
-{
-  const auto load_input_file = [](const input_file_t& input_file)
-  {
-    std::ifstream stream(input_file.p, std::ios::in | std::ios::binary);
-    if (stream.fail()) {
-      throw std::runtime_error("Could not open input file");
-    }
-    std::vector<unsigned char> contents(
-        (std::istreambuf_iterator<char>(stream)),
-        std::istreambuf_iterator<char>());
-    return std::optional(contents);
-  };
-  const auto load_interactive_file = [&cmdline]()
-  { return std::optional(create_entry_interactive(cmdline)); };
-  const auto plaintext = maybe_input_file.and_then(load_input_file)
-                             .or_else(load_interactive_file)
-                             .value();
-
-  const auto symkey = load_symkey(keypath.get_symkey_path());
-  const auto pubkey = load_pubkey(keypath.get_pubkey_path());
-
-  const auto encrypted =
-      encrypt(symkey_span_t {symkey}, public_key_span_t {pubkey}, plaintext);
-  const auto file_name = [&]()
-  {
-    if (maybe_output_file.has_value()) {
-      auto output_path = maybe_output_file.value().p;
-      if (output_path.is_absolute()) {
-        return output_path;
-      }
-      std::filesystem::create_directories(entrypath);
-      return (entrypath / output_path);
-    }
-    std::filesystem::create_directories(entrypath);
-
-    return entrypath / std::format("{}.diaria", get_iso_timestamp_utc());
-  }();
-  std::ofstream entry_file(file_name.c_str(),
-                           std::ios::out | std::ios::binary | std::ios::trunc);
-  if (entry_file.fail()) {
-    throw std::runtime_error(
-        std::format("Could not open output file \"{}\"", file_name.c_str()));
-  }
-  entry_file.write(make_signed_char(encrypted.data()),
-                   static_cast<std::streamsize>(encrypted.size()));
-
-  if (entry_file.fail()) {
-    throw std::runtime_error("Could not write to output file");
-  }
 }
 
 void read_entry(const key_repo_t& keypath,
