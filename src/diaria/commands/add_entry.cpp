@@ -30,8 +30,9 @@
 #include "../util.hpp"
 #include "common.hpp"
 #include "crypto/entry.hpp"
-
-static auto build_argv(std::string_view cmdline)
+namespace
+{
+auto build_argv(std::string_view cmdline)
 {
   wordexp_t words {};
   // NOLINTNEXTLINE(hicpp-signed-bitwise)
@@ -48,19 +49,19 @@ static auto build_argv(std::string_view cmdline)
   return result;
 }
 
-static void replace_first(std::string& input_string,
-                          std::string_view to_replace,
-                          std::string_view replace_with)
+void replace_first(std::string& input_string,
+                   std::string_view to_replace,
+                   std::string_view replace_with)
 {
-  std::size_t pos = input_string.find(to_replace);
+  const std::size_t pos = input_string.find(to_replace);
   if (pos == std::string::npos) {
     return;
   }
   input_string.replace(pos, to_replace.length(), replace_with);
 }
 
-static void start_editor(std::string_view cmdline,
-                         const std::filesystem::path& temp_entry_path)
+void start_editor(std::string_view cmdline,
+                  const std::filesystem::path& temp_entry_path)
 {
   auto owned_cmdline = std::string(cmdline);
   replace_first(owned_cmdline, "%", temp_entry_path.c_str());
@@ -92,7 +93,7 @@ struct smart_fd
   ~smart_fd() { close(fd); }
 };
 
-static auto create_entry_interactive(std::string_view cmdline)
+auto create_entry_interactive(std::string_view cmdline)
     -> std::vector<unsigned char>
 {
   std::string temp_entry_path("/tmp/diaria_XXXXXX");
@@ -125,10 +126,11 @@ static auto create_entry_interactive(std::string_view cmdline)
   return contents;
 }
 
-static auto get_iso_timestamp_utc() -> std::string
+auto get_iso_timestamp_utc() -> std::string
 {
   return std::format("{:%FT%H:%M:%S}", std::chrono::system_clock::now());
 }
+}  // namespace
 
 void add_entry(const key_repo_t& keypath,
                const std::filesystem::path& entrypath,

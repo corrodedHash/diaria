@@ -4,13 +4,15 @@
 #include <fstream>
 #include <ios>
 #include <iterator>
+#include <optional>
 #include <print>
 #include <ranges>
 #include <stdexcept>
-#include <string_view>
 #include <vector>
 
 #include "./repo.hpp"
+
+#include <sodium.h>
 
 #include "./util.hpp"
 #include "common.hpp"
@@ -21,9 +23,12 @@ namespace views = std::ranges::views;
 
 void dump_repo(const key_repo_t& keypath,
                const repo_path_t& repo,
-               const std::filesystem::path& target,
-               std::string_view password)
+               const std::filesystem::path& target)
 {
+  const auto password =
+      keypath.private_key_password
+          .or_else([]() { return std::optional(read_password()); })
+          .value();
   const auto private_key =
       load_private_key(keypath.get_private_key_path(), password);
   const auto symkey = load_symkey(keypath.get_symkey_path());

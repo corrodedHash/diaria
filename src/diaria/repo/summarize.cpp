@@ -13,19 +13,16 @@
 #include <ranges>
 #include <spanstream>
 #include <stdexcept>
-#include <string_view>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
-#include <bits/chrono.h>
-#include <bits/chrono_io.h>
-
 #include "../repo.hpp"
 #include "crypto/entry.hpp"
-#include "diaria/util.hpp"
 #include "crypto/secret_key.hpp"
+#include "diaria/util.hpp"
 
 using time_point = std::chrono::utc_clock::time_point;
 
@@ -154,9 +151,8 @@ void print_entries(const key_repo_t& keypath,
           "\x1b"
           "c");
     }
-    std::println("Reading entry from {:%F %H:%M}\n{}\n",
-                 entry.first,
-                 decrypted_decoded);
+    std::println(
+        "Reading entry from {:%F %H:%M}\n{}\n", entry.first, decrypted_decoded);
     if (paging) {
       std::println("Press [Enter] for next entry");
       if (std::getchar() == EOF) {
@@ -172,7 +168,6 @@ void print_entries(const key_repo_t& keypath,
 
 void summarize_repo(const key_repo_t& keypath,
                     const repo_path_t& repo,
-                    std::string_view password,
                     bool paging)
 {
   const auto list = list_entries(repo);
@@ -194,6 +189,10 @@ void summarize_repo(const key_repo_t& keypath,
     }
   }
 
+  const auto password =
+      keypath.private_key_password
+          .or_else([]() { return std::optional(read_password()); })
+          .value();
   print_entries(keypath, relevant_entries, password, paging);
   if (paging) {
     std::print(

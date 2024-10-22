@@ -15,7 +15,6 @@ KEY_ENTRY_COUNT=$(ls -1 "$TMPDIR/keys" | wc -l)
 # CHECK: Number of key entries: 3
 echo Number of key entries: $KEY_ENTRY_COUNT
 
-ENTRY_TEXT=$(head -c 24 /dev/urandom | base64)
 # CHECK: Writing entry "[[ENTRYTEXT:Testentry]]"
 echo "Writing entry \"Testentry\""
 $DIARIA --keys "$TMPDIR/keys" --entries "$TMPDIR/entries" add --editor "sh $0 %"

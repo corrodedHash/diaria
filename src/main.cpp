@@ -174,13 +174,7 @@ auto main(int argc, char** argv) -> int
 
   subcom_repo_dump->final_callback(
       [&keyrepo, &repopath, &dumped_repo_path]()
-      {
-        const auto password =
-            keyrepo.private_key_password
-                .or_else([]() { return std::optional(read_password()); })
-                .value();
-        dump_repo(key_repo_t {keyrepo}, repopath, dumped_repo_path, password);
-      });
+      { dump_repo(key_repo_t {keyrepo}, repopath, dumped_repo_path); });
   subcom_repo_load->final_callback(
       [&keyrepo, &repopath, &dumped_repo_path]()
       { load_repo(key_repo_t {keyrepo}, repopath, dumped_repo_path); });
@@ -200,13 +194,7 @@ auto main(int argc, char** argv) -> int
       "Do not press enter to advance to next entry, just print everything");
   subcom_repo_summarize->final_callback(
       [&keyrepo, &repopath, &summarize_long]()
-      {
-        const auto password =
-            keyrepo.private_key_password
-                .or_else([]() { return std::optional(read_password()); })
-                .value();
-        summarize_repo(keyrepo, repopath, password, !summarize_long);
-      });
+      { summarize_repo(keyrepo, repopath, !summarize_long); });
   CLI11_PARSE(app, argc, argv);
   return 0;
 }
