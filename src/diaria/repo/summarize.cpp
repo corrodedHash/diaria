@@ -154,7 +154,7 @@ void print_entries(const key_repo_t& keypath,
           "\x1b"
           "c");
     }
-    std::println("Reading entry from {:%F %HH:%MM}\n{}\n",
+    std::println("Reading entry from {:%F %H:%M}\n{}\n",
                  entry.first,
                  decrypted_decoded);
     if (paging) {
