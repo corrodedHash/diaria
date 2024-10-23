@@ -128,7 +128,9 @@ auto create_entry_interactive(std::string_view cmdline)
 
 auto get_iso_timestamp_utc() -> std::string
 {
-  return std::format("{:%FT%H:%M:%S}", std::chrono::system_clock::now());
+  return std::format("{:%FT%T}",
+                     std::chrono::floor<std::chrono::seconds>(
+                         std::chrono::system_clock::now()));
 }
 }  // namespace
 
