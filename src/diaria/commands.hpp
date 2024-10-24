@@ -7,11 +7,12 @@
 
 void setup_db(const key_repo_t& keypath);
 
-
-struct input_file_t {
+struct input_file_t
+{
   std::filesystem::path p;
 };
-struct output_file_t {
+struct output_file_t
+{
   std::filesystem::path p;
 };
 
@@ -24,3 +25,21 @@ void add_entry(const key_repo_t& keypath,
 void read_entry(const key_repo_t& keypath,
                 const std::filesystem::path& entry,
                 const std::optional<std::filesystem::path>& output);
+
+struct repo_path_t
+{
+  std::filesystem::path repo;
+};
+void dump_repo(const key_repo_t& keypath,
+               const repo_path_t& repo,
+               const std::filesystem::path& target);
+
+void load_repo(const key_repo_t& keypath,
+               const repo_path_t& repo,
+               const std::filesystem::path& source);
+
+void sync_repo(const repo_path_t& repo);
+
+void summarize_repo(const key_repo_t& keypath,
+                    const repo_path_t& repo,
+                    bool paging);

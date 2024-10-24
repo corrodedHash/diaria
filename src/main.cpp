@@ -13,7 +13,6 @@
 #include <unistd.h>
 
 #include "diaria/commands.hpp"
-#include "diaria/repo.hpp"
 #include "diaria/util.hpp"
 #include "project_info.hpp"
 
@@ -153,18 +152,15 @@ auto main(int argc, char** argv) -> int
   subcom_read->add_option("path", read_entry_path, "Path to entry")
       ->check(CLI::ExistingFile)
       ->required();
-  auto subcom_repo =
-      std::make_shared<CLI::App>("Manage the entire repository", "repo");
-  subcom_repo->require_subcommand(1);
   std::string dumped_repo_path {};
-  CLI::App* subcom_repo_load = subcom_repo->add_subcommand(
+  CLI::App* subcom_repo_load = app.add_subcommand(
       "load", "Load a dumped directory of cleartext into the repository");
   subcom_repo_load
       ->add_option("dumppath",
                    dumped_repo_path,
                    "Directory containing the cleartext entries to load")
       ->required();
-  CLI::App* subcom_repo_dump = subcom_repo->add_subcommand(
+  CLI::App* subcom_repo_dump = app.add_subcommand(
       "dump", "Dump the entry files in the repository as cleartext");
   subcom_repo_dump
       ->add_option("dumppath",
@@ -178,13 +174,12 @@ auto main(int argc, char** argv) -> int
   subcom_repo_load->final_callback(
       [&keyrepo, &repopath, &dumped_repo_path]()
       { load_repo(key_repo_t {keyrepo}, repopath, dumped_repo_path); });
-  app.add_subcommand(subcom_repo);
 
-  CLI::App* subcom_repo_sync = subcom_repo->add_subcommand(
+  CLI::App* subcom_repo_sync = app.add_subcommand(
       "sync", "Synchronize repository with configured remote server");
   subcom_repo_sync->final_callback([&repopath]() { sync_repo(repopath); });
 
-  CLI::App* subcom_repo_summarize = subcom_repo->add_subcommand(
+  CLI::App* subcom_repo_summarize = app.add_subcommand(
       "summarize",
       "Show some entries from different time intervals in the past");
   bool summarize_long {};

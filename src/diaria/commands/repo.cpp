@@ -10,14 +10,13 @@
 #include <stdexcept>
 #include <vector>
 
-#include "./repo.hpp"
-
 #include <sodium.h>
 
-#include "./util.hpp"
 #include "common.hpp"
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
+#include "diaria/commands.hpp"
+#include "diaria/util.hpp"
 
 namespace views = std::ranges::views;
 

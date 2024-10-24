@@ -19,9 +19,9 @@
 #include <utility>
 #include <vector>
 
-#include "../repo.hpp"
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
+#include "diaria/commands.hpp"
 #include "diaria/util.hpp"
 
 using time_point = std::chrono::utc_clock::time_point;
