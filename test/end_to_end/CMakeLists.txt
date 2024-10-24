@@ -1,0 +1,1 @@
+add_test(NAME end-to-end-test COMMAND env DIARIA=${CMAKE_BINARY_DIR}/diaria pytest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
