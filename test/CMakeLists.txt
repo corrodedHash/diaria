@@ -16,4 +16,4 @@ include(Catch)
 catch_discover_tests(unit_tests)
 
 
-add_subdirectory("end-to-end")
+add_subdirectory("end_to_end")

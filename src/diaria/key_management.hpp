@@ -24,3 +24,4 @@ struct key_repo_t
   [[nodiscard]] auto get_pubkey_path() const { return root / "key.pub"; }
   [[nodiscard]] auto get_private_key_path() const { return root / "key.key"; }
 };
+

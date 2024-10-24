@@ -6,8 +6,6 @@
 #include <string>
 #include <string_view>
 
-#include "util.hpp"
-
 #include <unistd.h>
 
 #include "common.hpp"
@@ -47,3 +45,4 @@ auto load_private_key(const std::filesystem::path& file_path,
   stored_secret_key const stored_private_key(stored_private_key_raw);
   return stored_private_key.extract_key(password);
 }
+

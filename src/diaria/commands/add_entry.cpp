@@ -26,10 +26,11 @@
 #include <unistd.h>
 #include <wordexp.h>
 
-#include "../commands.hpp"
-#include "../util.hpp"
 #include "common.hpp"
 #include "crypto/entry.hpp"
+#include "diaria/commands.hpp"
+#include "diaria/key_management.hpp"
+
 namespace
 {
 auto build_argv(std::string_view cmdline)

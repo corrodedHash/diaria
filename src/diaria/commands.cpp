@@ -27,10 +27,10 @@
 #include <unistd.h>
 #include <wordexp.h>
 
-#include "./util.hpp"
 #include "common.hpp"
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
+#include "diaria/key_management.hpp"
 
 void setup_db(const key_repo_t& keypath)
 {

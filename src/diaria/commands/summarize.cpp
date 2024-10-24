@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
@@ -11,7 +10,6 @@
 #include <optional>
 #include <print>
 #include <ranges>
-#include <spanstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -22,47 +20,10 @@
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
 #include "diaria/commands.hpp"
-#include "diaria/util.hpp"
+#include "diaria/key_management.hpp"
+#include "diaria/repo_management.hpp"
 
-using time_point = std::chrono::utc_clock::time_point;
 
-// Function to parse the timestamp from the filename
-auto parse_timestamp(std::string_view filename) -> std::optional<time_point>
-{
-  std::ispanstream input_stream {filename};
-  time_point timepoint;
-  std::chrono::from_stream(input_stream, "%FT%T", timepoint);
-  if (input_stream.fail()) {
-    throw std::runtime_error(std::format("Could not parse: \"{}\"", filename));
-  }
-  return timepoint;
-}
-
-auto list_entries(const repo_path_t& repo)
-    -> std::vector<std::pair<time_point, std::filesystem::path>>
-{
-  auto result =
-      std::filesystem::directory_iterator(repo.repo)
-      | std::views::filter([](auto entry) { return entry.is_regular_file(); })
-      | std::views::filter(
-          [](auto entry)
-          { return entry.path().filename().string().ends_with(".diaria"); })
-      | std::views::transform(
-          [](const auto& entry)
-          {
-            return std::make_pair(
-                parse_timestamp(std::string(entry.path().filename())),
-                entry.path());
-          })
-      | std::views::filter([](const auto& entry)
-                           { return entry.first.has_value(); })
-      | std::views::transform(
-          [](auto&& entry)
-          { return std::make_pair(entry.first.value(), entry.second); })
-      | std::ranges::to<std::vector>();
-  std::ranges::sort(result, {}, [](const auto& entry) { return entry.first; });
-  return result;
-}
 
 // TODO: This is an N*m approach over a sorted list
 // This is a place to optimize, but only once we are managing a billion entries

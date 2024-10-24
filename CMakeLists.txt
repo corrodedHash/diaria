@@ -4,7 +4,7 @@ include(cmake/prelude.cmake)
 
 project(
     diaria
-    VERSION 0.1.5
+    VERSION 0.1.6
     DESCRIPTION "Tool to manage diary entries"
     HOMEPAGE_URL "https://github.com/corrodedHash/diaria"
     LANGUAGES CXX

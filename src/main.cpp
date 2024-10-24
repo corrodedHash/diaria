@@ -2,7 +2,6 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
-#include <memory>
 #include <optional>
 #include <print>
 #include <stdexcept>
@@ -13,7 +12,7 @@
 #include <unistd.h>
 
 #include "diaria/commands.hpp"
-#include "diaria/util.hpp"
+#include "diaria/key_management.hpp"
 #include "project_info.hpp"
 
 auto main(int argc, char** argv) -> int
@@ -190,6 +189,10 @@ auto main(int argc, char** argv) -> int
   subcom_repo_summarize->final_callback(
       [&keyrepo, &repopath, &summarize_long]()
       { summarize_repo(keyrepo, repopath, !summarize_long); });
+
+  CLI::App* subcom_repo_stats =
+      app.add_subcommand("stats", "Show stats of the repository");
+  subcom_repo_stats->final_callback([&repopath]() { repo_stats(repopath); });
   CLI11_PARSE(app, argc, argv);
   return 0;
 }

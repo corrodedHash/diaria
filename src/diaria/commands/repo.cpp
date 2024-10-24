@@ -16,7 +16,7 @@
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
 #include "diaria/commands.hpp"
-#include "diaria/util.hpp"
+#include "diaria/key_management.hpp"
 
 namespace views = std::ranges::views;
 
