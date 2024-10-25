@@ -1,29 +1,36 @@
 #compdef diaria
 compdef _diaria diaria
 
-_diaria() {
-    local -a subcmds
-    subcmds=(
+# (( $+functions[_diaria_commands] )) ||
+_diaria_commands() {
+    local commands; commands=(
         'add:Add an entry'
         'read:Read an entry'
         'init:Initialize diaria key'
-        'repo:Diary repository based commands'
-        )
-    if (( CURRENT == 2)); then
-        _describe -t commands 'diaria command' subcmds
-    else
-        # cmd="${${subcmds[(r)$words[2]:*]%%:*}}"
-        # case $cmd in
-        # "read")
-        #     _path_files -g "*.diaria" -/
-        #     # _describe 'command' ('b:q' 'd:a')
-        # ;;
-        # *)
-        # echo $cmd
-        # ;;
-        # esac
-    fi
+        'sync:Synchronize the repository'
+        'load:Load cleartext files into the repository'
+        'dump:Dump the repository as cleartext files'
+        'summarize:Pick certain past time points and show those entries'
+        'stats:Chart the entry size by day'
+    )
+    _describe -t commands 'diaria commands' commands "$@"
+}
 
+_diaria() {
+    _arguments \
+        '(- *)'{-h,--help}'[Show help]'  \
+        '(-e --entries 1)--entries[Entry repository]:files:_directories' \
+        '(-k --keys)--keys[Key repository]:files:_directories' \
+        {-V,--version}'[Show version]' \
+        ":: :_diaria_commands"\
+        "*::: :->diaria" \
+
+    # echo $state
+    #     case $state in
+    #     (diaria)
+    #     _describe -t cmds 'diaria subcommands'
+    #     ;;
+    #     esac
 }
 
 # don't run the completion function when being source-ed or eval-ed
