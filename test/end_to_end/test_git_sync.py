@@ -2,7 +2,6 @@ import subprocess
 from pathlib import Path
 from .helper import diaria, key_path
 import uuid
-import os
 
 
 def repo_init_bare(p: Path):

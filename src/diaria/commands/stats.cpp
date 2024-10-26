@@ -59,18 +59,22 @@ struct RGB
   unsigned char red;
   unsigned char green;
   unsigned char blue;
+  [[nodiscard]] auto luminance() const -> double
+  {
+    return static_cast<double>(0.2126 * red + 0.7152 * green + 0.0722 * blue);
+  }
 };
 
-auto make_gradient(const RGB& colorA, const RGB& colorB, double factor)
+auto make_gradient(const RGB& color_a, const RGB& color_b, double factor)
 {
   assert(factor >= 0);
   assert(factor <= 1);
   const auto red =
-      static_cast<unsigned char>(std::lerp(colorA.red, colorB.red, factor));
+      static_cast<unsigned char>(std::lerp(color_a.red, color_b.red, factor));
   const auto green =
-      static_cast<unsigned char>(std::lerp(colorA.green, colorB.green, factor));
+      static_cast<unsigned char>(std::lerp(color_a.green, color_b.green, factor));
   const auto blue =
-      static_cast<unsigned char>(std::lerp(colorA.blue, colorB.blue, factor));
+      static_cast<unsigned char>(std::lerp(color_a.blue, color_b.blue, factor));
 
   return RGB {red, green, blue};
 }
@@ -97,10 +101,16 @@ auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
                              RGB {0x13, 0x3A, 0x94},
                              static_cast<double>(d) / 20000.);
       }();
-      std::print("\x1b[48;2;{};{};{}m{:2}\x1b[0m ",
+      const auto foreground_color = chosen_color.luminance() < 140
+          ? RGB {0xff, 0xff, 0xff}
+          : RGB {0, 0, 0};
+      std::print("\x1b[48;2;{};{};{}m\x1b[38;2;{};{};{}m{:2}\x1b[0m ",
                  chosen_color.red,
                  chosen_color.green,
                  chosen_color.blue,
+                 foreground_color.red,
+                 foreground_color.green,
+                 foreground_color.blue,
                  d / 1000);
     }
     std::println("");
