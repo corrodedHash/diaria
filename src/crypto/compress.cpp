@@ -139,7 +139,8 @@ static auto compress_lzma(lzma_stream* strm,
   }
 }
 
-auto compress(std::span<const unsigned char> input) -> std::vector<unsigned char>
+auto compress(std::span<const unsigned char> input)
+    -> std::vector<unsigned char>
 {
   lzma_stream strm = LZMA_STREAM_INIT;
 
@@ -358,5 +359,8 @@ auto decompress(std::span<const unsigned char> input)
     // to retry it so we need to exit.
     throw std::runtime_error("Could not initialize decoder");
   }
-  return decompress_lzma(&strm, input);
+
+  auto result = decompress_lzma(&strm, input);
+  lzma_end(&strm);
+  return result;
 }

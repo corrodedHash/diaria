@@ -2,5 +2,5 @@
 builtin = clear,rare,en-GB_to_en-US,names,informal,code
 check-filenames =
 check-hidden =
-skip = */.git,*/build,*/prefix,*/external
+skip = */.git,*/build,*/prefix,*/external,*/test/end_to_end/entry_data
 quiet-level = 2
