@@ -45,7 +45,7 @@ jobs:
     - name: Install CMake
       run: >-
         apt-get update
-        && apt-get install cmake clang++-19 libsodium-dev llvm-19-tools git -q -y
+        && apt-get install cmake clang++-19 libsodium-dev llvm-19-tools git catch2 python3-pytest -q -y
         && ln -s /usr/bin/FileCheck-19 /usr/bin/FileCheck
         && ln -s /usr/lib/llvm-19/build/utils/lit/lit.py /usr/bin/lit
 
@@ -81,7 +81,7 @@ jobs:
     - name: Install cmake and static analyzers
       run: >-
         apt-get update
-        && apt-get install clang-tidy-19 clang-19 cppcheck cmake libsodium-dev llvm-19-tools git -y -q
+        && apt-get install clang-tidy-19 clang-19 cppcheck cmake libsodium-dev llvm-19-tools git catch2 python3-pytest -y -q
         && ln -s /usr/bin/FileCheck-19 /usr/bin/FileCheck
         && ln -s /usr/lib/llvm-19/build/utils/lit/lit.py /usr/bin/lit
 
@@ -116,7 +116,7 @@ jobs:
     - name: Install LCov
       run: >- 
         apt-get update
-        && apt-get install clang-tidy-19 clang-19 cppcheck cmake libsodium-dev llvm-19-tools git llvm nodejs -y -q
+        && apt-get install clang-tidy-19 clang-19 cppcheck cmake libsodium-dev llvm-19-tools git llvm nodejs catch2 python3-pytest -y -q
         && ln -s /usr/bin/FileCheck-19 /usr/bin/FileCheck
         && ln -s /usr/lib/llvm-19/build/utils/lit/lit.py /usr/bin/lit
 
