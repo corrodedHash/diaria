@@ -2,7 +2,7 @@ import subprocess
 from pathlib import Path
 from .helper import diaria, key_path
 
-def test_find_executable(diaria: Path, tmp_path: Path):
+def test_old_entries(diaria: Path, tmp_path: Path):
     key_path = Path(__file__).parent / "entry_data"
     entry_path = Path(__file__).parent / "entry_data"
     read_cmd: list[str | Path] = [

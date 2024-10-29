@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <ranges>
 #include <span>
 #include <stdexcept>
@@ -12,6 +13,7 @@
 #include <sodium/crypto_secretbox_xchacha20poly1305.h>
 #include <sodium/randombytes.h>
 
+#include "compress.hpp"
 #include "crypto/secret_key.hpp"
 
 auto symenc(symkey_span_t key, std::span<const unsigned char> plaintext)
@@ -97,21 +99,41 @@ auto asymdec(private_key_span_t key, std::span<const unsigned char> ciphertext)
   return output;
 }
 
+constexpr std::array<unsigned char, 6> magictag = {
+    'D', 'I', 'A', 'R', 'I', 'A'};
+
+constexpr unsigned char current_diaria_version = 0;
 auto encrypt(symkey_span_t symkey,
              public_key_span_t pubkey,
-             std::span<const unsigned char> plaintext)
+             std::span<const unsigned char> filebytes)
     -> std::vector<unsigned char>
 {
-  auto asymmetric_encrypted = asymenc(pubkey, plaintext);
+  auto compressed = compress(filebytes);
+  auto asymmetric_encrypted = asymenc(pubkey, compressed);
   auto symmetric_encrypted = symenc(symkey, asymmetric_encrypted);
+  symmetric_encrypted.insert(symmetric_encrypted.begin(),
+                             current_diaria_version);
+  symmetric_encrypted.insert(
+      symmetric_encrypted.begin(), magictag.begin(), magictag.end());
+
   return symmetric_encrypted;
 }
 auto decrypt(symkey_span_t symkey,
              private_key_span_t private_key,
-             std::span<const unsigned char> ciphertext)
+             std::span<const unsigned char> filebytes)
     -> std::vector<unsigned char>
 {
-  auto symmetric_decrypted = symdec(symkey, ciphertext);
+  if (!std::equal(magictag.begin(), magictag.end(), filebytes.begin())) {
+    throw std::runtime_error("Decrypting file which is not a diaria entry");
+  }
+  const auto version = filebytes.subspan(magictag.size())[0];
+  if (version > current_diaria_version) {
+    throw std::runtime_error("Unknown diaria entry version");
+  }
+
+  auto plaintext = filebytes.subspan(magictag.size() + 1);
+  auto symmetric_decrypted = symdec(symkey, plaintext);
   auto asymmetric_decrypted = asymdec(private_key, symmetric_decrypted);
-  return asymmetric_decrypted;
+  auto decompressed = decompress(asymmetric_decrypted);
+  return decompressed;
 }

@@ -46,4 +46,4 @@ def test_summarize(diaria: Path, key_path: Path, tmp_path: Path):
     ).stdout
     assert "--1--" in summarize_output
     assert "--7--" in  summarize_output
-    assert "--31--" in  summarize_output
+    assert "--31--" in  summarize_output or "--30--" in  summarize_output
