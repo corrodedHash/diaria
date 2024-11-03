@@ -18,5 +18,5 @@ TEST_CASE("Check that entry gets recorded and can be decrypted")
   auto enc = encrypt(
       symkey_span_t {symkey}, public_key_span_t {pk}, important_data_span);
   auto dec = decrypt(symkey_span_t {symkey}, private_key_span_t {sk}, enc);
-  REQUIRE_THAT(dec, EqualsRange(important_data_span));
+  REQUIRE_THAT(dec, equals_range(important_data_span));
 }

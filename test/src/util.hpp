@@ -5,10 +5,10 @@
 #include <catch2/matchers/catch_matchers_templated.hpp>
 
 template<typename Range>
-struct EqualsRangeMatcher : Catch::Matchers::MatcherGenericBase
+struct equals_range_matcher : Catch::Matchers::MatcherGenericBase
 {
-  EqualsRangeMatcher(Range const& range)
-      : range {range}
+  explicit equals_range_matcher(Range const& input_range)
+      : range {input_range}
   {
   }
 
@@ -31,13 +31,13 @@ private:
 };
 
 template<typename Range>
-auto EqualsRange(const Range& range) -> EqualsRangeMatcher<Range>
+auto equals_range(const Range& range) -> equals_range_matcher<Range>
 {
-  return EqualsRangeMatcher<Range> {range};
+  return equals_range_matcher<Range> {range};
 }
 
 template<class R>
-auto print_byte_range(R&& byte_range)
+auto print_byte_range(const R&& byte_range)
 {
   const auto byte_printer = [](auto byte)
   { std::print(stderr, "{:02x}", byte); };

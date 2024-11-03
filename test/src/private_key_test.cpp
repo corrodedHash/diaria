@@ -10,5 +10,5 @@ TEST_CASE("Private key serialization")
   auto extracted = stored.get_serialized_key();
   auto restored = stored_secret_key(extracted);
   auto restored_sk = restored.extract_key("abc");
-  REQUIRE_THAT(sk, EqualsRange(restored_sk));
+  REQUIRE_THAT(sk, equals_range(restored_sk));
 }

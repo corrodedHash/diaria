@@ -157,6 +157,47 @@
       "cacheVariables": {
         "CMAKE_EXE_LINKER_FLAGS_RELEASE": "-Wl,-z,ibt,-z,shstk,-z,cet-report=warning"
       }
+    },
+    {
+      "name": "dev",
+      "inherits": [
+        "ci-linux",
+        "dev-mode"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "dev-tidy",
+      "inherits": [
+        "ci-ubuntu",
+        "ci-sanitize"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Sanitize"
+      }
+    },
+    {
+      "name": "dev-san",
+      "inherits": [
+        "ci-linux",
+        "dev-mode"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Sanitize",
+        "CMAKE_CXX_FLAGS_SANITIZE": "-U_FORTIFY_SOURCE -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-common"
+      }
+    },
+    {
+      "name": "dev-cov",
+      "inherits": [
+        "ci-coverage"
+      ],
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
     }
   ]
 }

@@ -84,14 +84,12 @@ auto init_encoder(lzma_stream* strm) -> bool
                static_cast<int>(ret));
   return false;
 }
-}  // namespace
 
 // This function is identical to the one in 01_compress_easy.c.
-static auto compress_lzma(lzma_stream* strm,
-                          std::span<const unsigned char> input)
+auto compress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
     -> std::vector<unsigned char>
 {
-  lzma_action action = LZMA_FINISH;
+  const lzma_action action = LZMA_FINISH;
 
   std::array<uint8_t, BUFSIZ> outbuf {};
   std::vector<unsigned char> result {};
@@ -105,7 +103,7 @@ static auto compress_lzma(lzma_stream* strm,
     lzma_ret ret = lzma_code(strm, action);
 
     if (strm->avail_out == 0 || ret == LZMA_STREAM_END) {
-      size_t write_size = sizeof(outbuf) - strm->avail_out;
+      const size_t write_size = sizeof(outbuf) - strm->avail_out;
 
       result.insert(result.end(), outbuf.begin(), outbuf.begin() + write_size);
 
@@ -138,13 +136,14 @@ static auto compress_lzma(lzma_stream* strm,
     }
   }
 }
+}  // namespace
 
 auto compress(std::span<const unsigned char> input)
     -> std::vector<unsigned char>
 {
   lzma_stream strm = LZMA_STREAM_INIT;
 
-  bool success = init_encoder(&strm);
+  const bool success = init_encoder(&strm);
   if (!success) {
     throw std::runtime_error("Compressor initialization failed");
   }
@@ -155,7 +154,9 @@ auto compress(std::span<const unsigned char> input)
   return compressed;
 }
 
-static auto init_decoder(lzma_stream* strm) -> bool
+namespace
+{
+auto init_decoder(lzma_stream* strm) -> bool
 {
   // Initialize a .xz decoder. The decoder supports a memory usage limit
   // and a set of flags.
@@ -231,9 +232,12 @@ static auto init_decoder(lzma_stream* strm) -> bool
                static_cast<std::underlying_type_t<lzma_ret>>(ret));
   return false;
 }
+}  // namespace
 
-static auto decompress_lzma(lzma_stream* strm,
-                            std::span<const unsigned char> input)
+namespace
+{
+
+auto decompress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
     -> std::vector<unsigned char>
 {
   // When LZMA_CONCATENATED flag was used when initializing the decoder,
@@ -246,7 +250,7 @@ static auto decompress_lzma(lzma_stream* strm,
   // is still OK to use it if you want. When LZMA_CONCATENATED isn't
   // used, the decoder will stop after the first .xz stream. In that
   // case some unused data may be left in strm->next_in.
-  lzma_action action = LZMA_FINISH;
+  const lzma_action action = LZMA_FINISH;
 
   std::array<uint8_t, BUFSIZ> outbuf {};
   std::vector<unsigned char> result {};
@@ -260,7 +264,7 @@ static auto decompress_lzma(lzma_stream* strm,
     lzma_ret ret = lzma_code(strm, action);
 
     if (strm->avail_out == 0 || ret == LZMA_STREAM_END) {
-      size_t write_size = sizeof(outbuf) - strm->avail_out;
+      const size_t write_size = sizeof(outbuf) - strm->avail_out;
 
       result.insert(result.end(), outbuf.begin(), outbuf.begin() + write_size);
 
@@ -349,6 +353,7 @@ static auto decompress_lzma(lzma_stream* strm,
     }
   }
 }
+}  // namespace
 
 auto decompress(std::span<const unsigned char> input)
     -> std::vector<unsigned char>
