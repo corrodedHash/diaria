@@ -193,6 +193,13 @@ auto main(int argc, char** argv) -> int
   CLI::App* subcom_repo_stats =
       app.add_subcommand("stats", "Show stats of the repository");
   subcom_repo_stats->final_callback([&repopath]() { repo_stats(repopath); });
-  CLI11_PARSE(app, argc, argv);
+  try {
+    CLI11_PARSE(app, argc, argv);
+
+  } catch (const std::exception& ex) {
+    std::println(
+        stderr, "An error occured:\n {}\n{}", typeid(ex).name(), ex.what());
+    std::exit(1);
+  }
   return 0;
 }
