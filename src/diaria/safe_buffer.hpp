@@ -31,8 +31,9 @@ public:
       throw std::runtime_error("Could not allocate safe memory");
     }
     buffer = std::span(buffer_raw, buffer_size);
-    std::copy_n(
-        (std::istreambuf_iterator<char>(stream)), buffer.size(), buffer.data());
+    std::ranges::copy_n((std::istreambuf_iterator<char>(stream)),
+                        static_cast<std::int64_t>(buffer.size()),
+                        buffer.begin());
     if (stream.fail()) {
       throw std::runtime_error(
           std::format("Could not read file {}", path.c_str()));

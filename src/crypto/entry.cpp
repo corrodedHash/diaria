@@ -114,7 +114,7 @@ auto encrypt(symkey_span_t symkey,
   symmetric_encrypted.insert(symmetric_encrypted.begin(),
                              current_diaria_version);
   symmetric_encrypted.insert(
-      symmetric_encrypted.begin(), magictag.begin(), magictag.end());
+      symmetric_encrypted.begin(), magictag.cbegin(), magictag.cend());
 
   return symmetric_encrypted;
 }
