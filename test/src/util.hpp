@@ -23,7 +23,7 @@ struct equals_range_matcher : Catch::Matchers::MatcherGenericBase
 
   auto describe() const -> std::string override
   {
-    return "Equals: " + Catch::rangeToString(range);
+    return "Equals: " + Catch::rangeToString(*range);
   }
 
 private:
