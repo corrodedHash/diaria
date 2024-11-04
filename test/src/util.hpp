@@ -8,7 +8,7 @@ template<typename Range>
 struct equals_range_matcher : Catch::Matchers::MatcherGenericBase
 {
   explicit equals_range_matcher(Range const& input_range)
-      : range {input_range}
+      : range {&input_range}
   {
   }
 
@@ -18,7 +18,7 @@ struct equals_range_matcher : Catch::Matchers::MatcherGenericBase
     using std::begin;
     using std::end;
 
-    return std::equal(begin(range), end(range), begin(other), end(other));
+    return std::equal(begin(*range), end(*range), begin(other), end(other));
   }
 
   auto describe() const -> std::string override
@@ -27,7 +27,7 @@ struct equals_range_matcher : Catch::Matchers::MatcherGenericBase
   }
 
 private:
-  Range const& range;
+  const Range* range;
 };
 
 template<typename Range>
