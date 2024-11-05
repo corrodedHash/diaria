@@ -198,7 +198,7 @@ auto main(int argc, char** argv) -> int
 
   } catch (const std::exception& ex) {
     std::println(
-        stderr, "An error occured:\n {}\n{}", typeid(ex).name(), ex.what());
+        stderr, "An error occurred:\n {}\n{}", typeid(ex).name(), ex.what());
     std::exit(1);
   }
   return 0;
