@@ -1,7 +1,8 @@
 if (BUILD_STATIC_BINARY)
     FetchContent_Declare(libsodium_tarball
         URL https://download.libsodium.org/libsodium/releases/libsodium-1.0.20-stable.tar.gz
-        URL_HASH SHA1=c79ff91090e116e46e53d2989c701a30d808c025
+	# Package changes, we cannot used hash to verify
+	# URL_HASH SHA1=c79ff91090e116e46e53d2989c701a30d808c025
         DOWNLOAD_EXTRACT_TIMESTAMP ON
     )
 
