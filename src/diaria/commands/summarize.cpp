@@ -23,12 +23,10 @@
 #include "diaria/key_management.hpp"
 #include "diaria/repo_management.hpp"
 
-
-
 // TODO: This is an N*m approach over a sorted list
 // This is a place to optimize, but only once we are managing a billion entries
 template<std::ranges::forward_range DatePairs, std::ranges::forward_range Dates>
-  requires std::is_same_v<typename DatePairs::value_type,
+  requires std::is_same_v<typename std::ranges::range_value_t<DatePairs>,
                           std::pair<time_point, time_point>>
 auto find_indices_within_ranges(const DatePairs& ranges,
                                 const Dates& dates) -> std::vector<std::size_t>
@@ -71,16 +69,14 @@ auto build_relevant_entry_list(
       | std::ranges::views::transform(
           [&timepoint_now](auto& date_range)
           {
-            return std::make_pair(
-                timepoint_now - date_range.first - date_range.second,
-                timepoint_now - date_range.first + date_range.second);
-          })
-      | std::ranges::to<std::vector>();
-  auto relevant_entry_indices = find_indices_within_ranges(
-      ranges,
-      list
-          | std::ranges::views::transform([](const auto& entry)
-                                          { return entry.first; }));
+            auto& [distance, delta] = date_range;
+            return std::make_pair(timepoint_now - distance - delta,
+                                  timepoint_now - distance + delta);
+          });
+  const auto dates = list
+      | std::ranges::views::transform([](const auto& entry)
+                                      { return entry.first; });
+  auto relevant_entry_indices = find_indices_within_ranges(ranges, dates);
   auto relevant_entries = std::ranges::reverse_view {relevant_entry_indices}
       | std::ranges::views::transform([&list](const auto& index)
                                       { return list[index]; });
