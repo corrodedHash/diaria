@@ -26,7 +26,7 @@ struct repo_path_t
 struct input_reader
 {
   virtual auto get_plaintext() -> std::vector<unsigned char> = 0;
-  virtual ~input_reader(){}
+  virtual ~input_reader() = default;
 };
 
 struct file_input_reader final : input_reader
@@ -39,7 +39,7 @@ struct file_input_reader final : input_reader
   file_input_reader(file_input_reader&&) = delete;
   file_input_reader& operator=(const file_input_reader&) = default;
   file_input_reader& operator=(file_input_reader&&) = delete;
-  ~file_input_reader() override {}
+  ~file_input_reader() override = default;
 };
 
 struct editor_input_reader final : input_reader
@@ -52,7 +52,7 @@ struct editor_input_reader final : input_reader
   editor_input_reader(editor_input_reader&&) = delete;
   editor_input_reader& operator=(const editor_input_reader&) = default;
   editor_input_reader& operator=(editor_input_reader&&) = delete;
-  ~editor_input_reader() override {}
+  ~editor_input_reader() override = default;
 };
 
 void add_entry(const key_repo_t& keypath,
