@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <memory>
 #include <optional>
 #include <print>
 #include <stdexcept>
@@ -126,7 +127,19 @@ auto main(int argc, char** argv) -> int
       ->default_str(cmdline);
   subcom_add->final_callback(
       [&keyrepo, &repopath, &cmdline, &input_path, &output_path]()
-      { add_entry(keyrepo, repopath.repo, cmdline, input_path, output_path); });
+      {
+        std::unique_ptr<input_reader> input;
+        if (input_path) {
+          auto bla = file_input_reader {};
+          bla.input_file = *input_path;
+          input = std::make_unique<file_input_reader>(bla);
+        } else {
+          auto bla = editor_input_reader {};
+          bla.cmdline = cmdline;
+          input = std::make_unique<editor_input_reader>(bla);
+        }
+        add_entry(keyrepo, repopath.repo, std::move(input), output_path);
+      });
   std::filesystem::path read_entry_path {};
   std::optional<std::filesystem::path> read_output {};
   CLI::App* subcom_read =

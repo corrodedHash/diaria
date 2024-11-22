@@ -11,6 +11,7 @@
 #include <ios>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <print>
 #include <ranges>
@@ -94,8 +95,26 @@ struct smart_fd
   ~smart_fd() { close(fd); }
 };
 
-auto create_entry_interactive(std::string_view cmdline)
-    -> std::vector<unsigned char>
+auto get_iso_timestamp_utc() -> std::string
+{
+  return std::format("{:%FT%T}",
+                     std::chrono::floor<std::chrono::seconds>(
+                         std::chrono::system_clock::now()));
+}
+}  // namespace
+
+auto file_input_reader::get_plaintext() -> std::vector<unsigned char>
+{
+  std::ifstream stream(input_file.p, std::ios::in | std::ios::binary);
+  if (stream.fail()) {
+    throw std::runtime_error("Could not open input file");
+  }
+  std::vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
+                                      std::istreambuf_iterator<char>());
+  return contents;
+}
+
+auto editor_input_reader::get_plaintext() -> std::vector<unsigned char>
 {
   std::string temp_entry_path("/tmp/diaria_XXXXXX");
   const smart_fd entry_fd {mkostemp(temp_entry_path.data(), O_CLOEXEC)};
@@ -127,36 +146,12 @@ auto create_entry_interactive(std::string_view cmdline)
   return contents;
 }
 
-auto get_iso_timestamp_utc() -> std::string
-{
-  return std::format("{:%FT%T}",
-                     std::chrono::floor<std::chrono::seconds>(
-                         std::chrono::system_clock::now()));
-}
-}  // namespace
-
 void add_entry(const key_repo_t& keypath,
                const std::filesystem::path& entrypath,
-               std::string_view cmdline,
-               const std::optional<input_file_t>& maybe_input_file,
+               std::unique_ptr<input_reader> input,
                const std::optional<output_file_t>& maybe_output_file)
 {
-  const auto load_input_file = [](const input_file_t& input_file)
-  {
-    std::ifstream stream(input_file.p, std::ios::in | std::ios::binary);
-    if (stream.fail()) {
-      throw std::runtime_error("Could not open input file");
-    }
-    std::vector<unsigned char> contents(
-        (std::istreambuf_iterator<char>(stream)),
-        std::istreambuf_iterator<char>());
-    return std::optional(contents);
-  };
-  const auto load_interactive_file = [&cmdline]()
-  { return std::optional(create_entry_interactive(cmdline)); };
-  const auto plaintext = maybe_input_file.and_then(load_input_file)
-                             .or_else(load_interactive_file)
-                             .value();
+  const auto plaintext = input->get_plaintext();
 
   const auto symkey = load_symkey(keypath.get_symkey_path());
   const auto pubkey = load_pubkey(keypath.get_pubkey_path());
