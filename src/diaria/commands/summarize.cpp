@@ -17,10 +17,10 @@
 #include <utility>
 #include <vector>
 
+#include "./summarize.hpp"
+
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
-#include "diaria/commands.hpp"
-#include "diaria/key_management.hpp"
 #include "diaria/repo_management.hpp"
 
 // TODO: This is an N*m approach over a sorted list

@@ -20,6 +20,8 @@
 #include <string_view>
 #include <vector>
 
+#include "./add_entry.hpp"
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -28,8 +30,6 @@
 
 #include "common.hpp"
 #include "crypto/entry.hpp"
-#include "diaria/commands.hpp"
-#include "diaria/key_management.hpp"
 
 namespace
 {
