@@ -34,12 +34,6 @@ struct file_input_reader final : input_reader
   input_file_t input_file;
 
   auto get_plaintext() -> std::vector<unsigned char> override;
-  file_input_reader() = default;
-  file_input_reader(const file_input_reader&) = default;
-  file_input_reader(file_input_reader&&) = delete;
-  file_input_reader& operator=(const file_input_reader&) = default;
-  file_input_reader& operator=(file_input_reader&&) = delete;
-  ~file_input_reader() override = default;
 };
 
 struct editor_input_reader final : input_reader
@@ -47,18 +41,38 @@ struct editor_input_reader final : input_reader
   std::string_view cmdline;
 
   auto get_plaintext() -> std::vector<unsigned char> override;
-  editor_input_reader() = default;
-  editor_input_reader(const editor_input_reader&) = default;
-  editor_input_reader(editor_input_reader&&) = delete;
-  editor_input_reader& operator=(const editor_input_reader&) = default;
-  editor_input_reader& operator=(editor_input_reader&&) = delete;
-  ~editor_input_reader() override = default;
+};
+
+struct entry_writer
+{
+  virtual auto write_entry(std::span<const unsigned char> ciphertext) -> void = 0;
+  virtual ~entry_writer() = default;
+};
+
+struct file_entry_writer : entry_writer
+{
+protected:
+  static void write_to_file(const std::filesystem::path& filename,
+                     std::span<const unsigned char> data);
+};
+
+struct repo_entry_writer final : file_entry_writer
+{
+  repo_path_t repo_path;
+
+  auto write_entry(std::span<const unsigned char> ciphertext) -> void override;
+};
+
+struct outfile_entry_writer final : file_entry_writer
+{
+  output_file_t outfile;
+
+  auto write_entry(std::span<const unsigned char> ciphertext) -> void override;
 };
 
 void add_entry(const key_repo_t& keypath,
-               const std::filesystem::path& entrypath,
                std::unique_ptr<input_reader> input,
-               const std::optional<output_file_t>& maybe_output_file);
+               std::unique_ptr<entry_writer> output);
 
 void read_entry(const key_repo_t& keypath,
                 const std::filesystem::path& entry,

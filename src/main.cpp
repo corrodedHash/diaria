@@ -138,7 +138,17 @@ auto main(int argc, char** argv) -> int
           bla.cmdline = cmdline;
           input = std::make_unique<editor_input_reader>(bla);
         }
-        add_entry(keyrepo, repopath.repo, std::move(input), output_path);
+        std::unique_ptr<entry_writer> output;
+        if (output_path) {
+          auto bla = outfile_entry_writer {};
+          bla.outfile = *output_path;
+          output = std::make_unique<outfile_entry_writer>(bla);
+        } else {
+          auto bla = repo_entry_writer {};
+          bla.repo_path = repopath;
+          output = std::make_unique<repo_entry_writer>(bla);
+        }
+        add_entry(keyrepo, std::move(input), std::move(output));
       });
   std::filesystem::path read_entry_path {};
   std::optional<std::filesystem::path> read_output {};

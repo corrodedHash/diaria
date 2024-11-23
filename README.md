@@ -20,4 +20,4 @@ Especially for long term entries, the symmetric encryption used is more likely t
 ## Many thanks to
 CMake project template by [cmake-init](https://github.com/friendlyanon/cmake-init)
 
-Easy to use, hard to misuse encryption librare [libsodium](https://doc.libsodium.org/)
+Easy to use, hard to misuse encryption library [libsodium](https://doc.libsodium.org/)

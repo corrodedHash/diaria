@@ -12,7 +12,6 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
-#include <optional>
 #include <print>
 #include <ranges>
 #include <span>
@@ -146,10 +145,42 @@ auto editor_input_reader::get_plaintext() -> std::vector<unsigned char>
   return contents;
 }
 
+void file_entry_writer::write_to_file(const std::filesystem::path& filename,
+                                      std::span<const unsigned char> data)
+{
+  std::filesystem::create_directories(filename.parent_path());
+
+  std::ofstream entry_file(filename.c_str(),
+                           std::ios::out | std::ios::binary | std::ios::trunc);
+  if (entry_file.fail()) {
+    throw std::runtime_error(
+        std::format("Could not open output file \"{}\"", filename.c_str()));
+  }
+  entry_file.write(make_signed_char(data.data()),
+                   static_cast<std::streamsize>(data.size()));
+
+  if (entry_file.fail()) {
+    throw std::runtime_error("Could not write to output file");
+  }
+}
+
+auto repo_entry_writer::write_entry(std::span<const unsigned char> ciphertext)
+    -> void
+{
+  write_to_file(
+      repo_path.repo / std::format("{}.diaria", get_iso_timestamp_utc()),
+      ciphertext);
+}
+
+auto outfile_entry_writer::write_entry(
+    std::span<const unsigned char> ciphertext) -> void
+{
+  write_to_file(outfile.p, ciphertext);
+}
+
 void add_entry(const key_repo_t& keypath,
-               const std::filesystem::path& entrypath,
                std::unique_ptr<input_reader> input,
-               const std::optional<output_file_t>& maybe_output_file)
+               std::unique_ptr<entry_writer> output)
 {
   const auto plaintext = input->get_plaintext();
 
@@ -158,30 +189,5 @@ void add_entry(const key_repo_t& keypath,
 
   const auto encrypted =
       encrypt(symkey_span_t {symkey}, public_key_span_t {pubkey}, plaintext);
-  const auto file_name = [&]()
-  {
-    if (maybe_output_file.has_value()) {
-      auto output_path = maybe_output_file.value().p;
-      if (output_path.is_absolute()) {
-        return output_path;
-      }
-      std::filesystem::create_directories(entrypath);
-      return (entrypath / output_path);
-    }
-    std::filesystem::create_directories(entrypath);
-
-    return entrypath / std::format("{}.diaria", get_iso_timestamp_utc());
-  }();
-  std::ofstream entry_file(file_name.c_str(),
-                           std::ios::out | std::ios::binary | std::ios::trunc);
-  if (entry_file.fail()) {
-    throw std::runtime_error(
-        std::format("Could not open output file \"{}\"", file_name.c_str()));
-  }
-  entry_file.write(make_signed_char(encrypted.data()),
-                   static_cast<std::streamsize>(encrypted.size()));
-
-  if (entry_file.fail()) {
-    throw std::runtime_error("Could not write to output file");
-  }
+  output->write_entry(encrypted);
 }

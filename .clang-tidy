@@ -3,16 +3,20 @@
 # misc-non-private-member-variables-in-classes: the options don't do anything
 # modernize-use-nodiscard: too aggressive, attribute is situationally useful
 Checks: "*,\
-  -google-readability-todo,\
   -altera-*,\
   -fuchsia-*,\
-  fuchsia-multiple-inheritance,\
+  -llvmlibc-*,\
+  \
+  -concurrency-mt-unsafe,\
+  -google-readability-todo,\
+  -hicpp-special-member-functions,\
   -llvm-header-guard,\
   -llvm-include-order,\
-  -llvmlibc-*,\
-  -concurrency-mt-unsafe,\
+  -misc-include-cleaner,\
   -misc-non-private-member-variables-in-classes,\
-  -misc-include-cleaner"
+  \
+  fuchsia-multiple-inheritance,\
+  "
 WarningsAsErrors: ''
 CheckOptions:
   - key: 'bugprone-argument-comment.StrictMode'
@@ -35,6 +39,8 @@ CheckOptions:
   - key: 'cppcoreguidelines-init-variables.MathHeader'
     value: '<cmath>'
   - key: 'cppcoreguidelines-narrowing-conversions.PedanticMode'
+    value: 'true'
+  - key: 'cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor'
     value: 'true'
   - key: 'readability-else-after-return.WarnOnUnfixable'
     value: 'true'
