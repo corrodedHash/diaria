@@ -4,11 +4,11 @@
 #include "../command_types.hpp"
 #include "../key_management.hpp"
 
-void dump_repo(const key_repo_t& keypath,
+void dump_repo(const key_repo_paths_t& keypath,
                const repo_path_t& repo,
                const std::filesystem::path& target);
 
-void load_repo(const key_repo_t& keypath,
+void load_repo(const key_repo_paths_t& keypath,
                const repo_path_t& repo,
                const std::filesystem::path& source);
 

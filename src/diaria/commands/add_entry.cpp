@@ -178,7 +178,7 @@ auto outfile_entry_writer::write_entry(
   write_to_file(outfile.p, ciphertext);
 }
 
-void add_entry(const key_repo_t& keypath,
+void add_entry(const key_repo_paths_t& keypath,
                std::unique_ptr<input_reader> input,
                std::unique_ptr<entry_writer> output)
 {

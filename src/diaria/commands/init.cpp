@@ -30,7 +30,7 @@
 #include "crypto/secret_key.hpp"
 #include "diaria/key_management.hpp"
 
-void setup_db(const key_repo_t& keypath)
+void setup_db(const key_repo_paths_t& keypath)
 {
   const auto [pk, sk] = generate_keypair();
   const auto symkey = generate_symkey();

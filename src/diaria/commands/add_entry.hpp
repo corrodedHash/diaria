@@ -52,6 +52,6 @@ struct outfile_entry_writer final : file_entry_writer
   auto write_entry(std::span<const unsigned char> ciphertext) -> void override;
 };
 
-void add_entry(const key_repo_t& keypath,
+void add_entry(const key_repo_paths_t& keypath,
                std::unique_ptr<input_reader> input,
                std::unique_ptr<entry_writer> output);

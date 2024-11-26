@@ -83,7 +83,7 @@ auto build_relevant_entry_list(
   return relevant_entries | std::ranges::to<std::vector>();
 }
 
-void print_entries(const key_repo_t& keypath,
+void print_entries(const key_repo_paths_t& keypath,
                    const std::ranges::forward_range auto& relevant_entries,
                    std::string_view password,
                    bool paging)
@@ -123,7 +123,7 @@ void print_entries(const key_repo_t& keypath,
   }
 }
 
-void summarize_repo(const key_repo_t& keypath,
+void summarize_repo(const key_repo_paths_t& keypath,
                     const repo_path_t& repo,
                     bool paging)
 {

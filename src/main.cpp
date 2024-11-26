@@ -40,7 +40,7 @@ auto main(int argc, char** argv) -> int
     }
     return std::filesystem::path(xdg_config_home_raw);
   }();
-  key_repo_t keyrepo {.root = xdg_data_home / "diaria",
+  key_repo_paths_t keyrepo {.root = xdg_data_home / "diaria",
                       .private_key_password = std::nullopt};
   repo_path_t repopath(xdg_data_home / "diaria" / "entries");
   const std::filesystem::path configpath(xdg_config_home / "diaria.toml");
@@ -192,10 +192,10 @@ auto main(int argc, char** argv) -> int
 
   subcom_repo_dump->final_callback(
       [&keyrepo, &repopath, &dumped_repo_path]()
-      { dump_repo(key_repo_t {keyrepo}, repopath, dumped_repo_path); });
+      { dump_repo(key_repo_paths_t {keyrepo}, repopath, dumped_repo_path); });
   subcom_repo_load->final_callback(
       [&keyrepo, &repopath, &dumped_repo_path]()
-      { load_repo(key_repo_t {keyrepo}, repopath, dumped_repo_path); });
+      { load_repo(key_repo_paths_t {keyrepo}, repopath, dumped_repo_path); });
 
   CLI::App* subcom_repo_sync = app.add_subcommand(
       "sync", "Synchronize repository with configured remote server");
