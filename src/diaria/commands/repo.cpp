@@ -4,7 +4,7 @@
 #include <fstream>
 #include <ios>
 #include <iterator>
-#include <optional>
+#include <memory>
 #include <print>
 #include <ranges>
 #include <stdexcept>
@@ -15,23 +15,15 @@
 #include <sodium.h>
 
 #include "common.hpp"
-#include "crypto/entry.hpp"
-#include "crypto/secret_key.hpp"
+#include "diaria/command_types.hpp"
 
 namespace views = std::ranges::views;
 
-void dump_repo(const key_repo_paths_t& keypath,
+void dump_repo(std::unique_ptr<entry_decryptor_initializer> keys,
                const repo_path_t& repo,
                const std::filesystem::path& target)
 {
-  const auto password =
-      keypath.private_key_password
-          .or_else([]() { return std::optional(read_password()); })
-          .value();
-  const auto private_key =
-      load_private_key(keypath.get_private_key_path(), password);
-  const auto symkey = load_symkey(keypath.get_symkey_path());
-
+  const auto decryptor = keys->init();
   std::filesystem::create_directories(target);
 
   for (const auto& entry :
@@ -50,8 +42,7 @@ void dump_repo(const key_repo_paths_t& keypath,
         (std::istreambuf_iterator<char>(stream)),
         std::istreambuf_iterator<char>());
 
-    const auto decrypted = decrypt(
-        symkey_span_t {symkey}, private_key_span_t {private_key}, contents);
+    const auto decrypted = decryptor.decrypt(contents);
     const auto output_file_name =
         entry.path().filename().replace_extension("txt");
     std::ofstream entry_file(
@@ -65,12 +56,11 @@ void dump_repo(const key_repo_paths_t& keypath,
                      static_cast<std::streamsize>(decrypted.size()));
   }
 }
-void load_repo(const key_repo_paths_t& keypath,
+void load_repo(std::unique_ptr<entry_encryptor_initializer> keys,
                const repo_path_t& repo,
                const std::filesystem::path& source)
 {
-  const auto pubkey = load_pubkey(keypath.get_pubkey_path());
-  const auto symkey = load_symkey(keypath.get_symkey_path());
+  const auto encryptor = keys->init();
   std::filesystem::create_directories(repo.repo);
 
   for (const auto& entry : std::filesystem::directory_iterator(source)
@@ -84,8 +74,7 @@ void load_repo(const key_repo_paths_t& keypath,
         (std::istreambuf_iterator<char>(stream)),
         std::istreambuf_iterator<char>());
 
-    const auto decrypted =
-        encrypt(symkey_span_t {symkey}, public_key_span_t {pubkey}, contents);
+    const auto decrypted = encryptor.encrypt(contents);
     const auto output_file_name =
         entry.path().filename().replace_extension("diaria");
     std::ofstream entry_file(

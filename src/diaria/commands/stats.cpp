@@ -11,6 +11,7 @@
 #include "./stats.hpp"
 
 #include <sys/types.h>
+
 #include "diaria/repo_management.hpp"
 
 auto to_ymd(const auto& input_time)
@@ -117,6 +118,7 @@ auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
       }();
       const auto foreground_color =
           chosen_color.luminance() < 140 ? color_white : color_black;
+      const auto bytes_per_kilobyte = 1000;
       std::print("\x1b[48;2;{};{};{}m\x1b[38;2;{};{};{}m{:2}\x1b[0m ",
                  chosen_color.red,
                  chosen_color.green,
@@ -124,7 +126,7 @@ auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
                  foreground_color.red,
                  foreground_color.green,
                  foreground_color.blue,
-                 cell_byte_count / 1000);
+                 cell_byte_count / bytes_per_kilobyte);
     }
     std::println("");
   }

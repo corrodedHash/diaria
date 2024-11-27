@@ -1,5 +1,5 @@
 #include <fstream>
-#include <tuple>
+#include <string>
 
 #include "./command_types.hpp"
 
@@ -19,13 +19,6 @@ auto load_file(const std::filesystem::path& file_path) -> T
   return key;
 }
 
-auto load_decrypt_files(const key_repo_paths_t& repo)
-{
-  auto symkey = load_file<symkey_t>(repo.get_symkey_path());
-  auto private_key = load_file<stored_secret_key::serialized_key_t>(
-      repo.get_private_key_path());
-  return std::make_tuple(symkey, private_key);
-}
 }  // namespace
 
 auto file_entry_encryptor_initializer::init() -> entry_encryptor
@@ -35,19 +28,32 @@ auto file_entry_encryptor_initializer::init() -> entry_encryptor
   return {symkey, public_key};
 }
 
-auto stored_password_entry_decryptor_initializer::init() -> entry_decryptor
+auto stored_password_provider::provide() -> std::string
 {
-  auto [symkey, private_key_raw] = load_decrypt_files(paths);
-  stored_secret_key pkey(private_key_raw);
-  auto private_key = pkey.extract_key(password);
-  return {symkey, private_key};
+  return password;
 }
 
-auto prompt_password_entry_decryptor_initializer::init() -> entry_decryptor
+auto stdin_password_provider::provide() -> std::string
 {
-  auto [symkey, private_key_raw] = load_decrypt_files(paths);
-  auto password = read_password();
-  stored_secret_key pkey(private_key_raw);
-  auto private_key = pkey.extract_key(password);
+  return read_password();
+}
+auto file_password_provider::provide() -> std::string
+{
+  std::ifstream passfile(password_file);
+  if (passfile.fail()) {
+    throw std::runtime_error("Could not open password file");
+  }
+  std::string password {};
+  std::getline(passfile, password);
+  return password;
+}
+
+auto file_entry_decryptor_initializer::init() -> entry_decryptor
+{
+  auto symkey = load_file<symkey_t>(paths.get_symkey_path());
+  auto private_key_raw = load_file<stored_secret_key::serialized_key_t>(
+      paths.get_private_key_path());
+  const stored_secret_key pkey(private_key_raw);
+  auto private_key = pkey.extract_key(pp->provide());
   return {symkey, private_key};
 }

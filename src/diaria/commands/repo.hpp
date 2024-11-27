@@ -2,13 +2,12 @@
 #include <filesystem>
 
 #include "../command_types.hpp"
-#include "../key_management.hpp"
 
-void dump_repo(const key_repo_paths_t& keypath,
+void dump_repo(std::unique_ptr<entry_decryptor_initializer> keys,
                const repo_path_t& repo,
                const std::filesystem::path& target);
 
-void load_repo(const key_repo_paths_t& keypath,
+void load_repo(std::unique_ptr<entry_encryptor_initializer> keys,
                const repo_path_t& repo,
                const std::filesystem::path& source);
 

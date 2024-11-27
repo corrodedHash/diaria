@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 include(cmake/prelude.cmake)
 
 project(
@@ -33,7 +35,7 @@ add_subdirectory(src)
 
 # ---- Declare executable ----
 
-add_executable(executable_exe src/main.cpp)
+add_executable(executable_exe src/main.cpp src/cli_commands.cpp)
 add_executable(executable::exe ALIAS executable_exe)
 
 set_property(TARGET executable_exe PROPERTY OUTPUT_NAME diaria)

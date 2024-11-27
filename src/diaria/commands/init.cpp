@@ -8,12 +8,11 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
-#include <optional>
+#include <memory>
 #include <print>
 #include <ranges>
 #include <span>
 #include <stdexcept>
-#include <string>
 #include <system_error>
 #include <utility>
 
@@ -28,9 +27,11 @@
 #include "common.hpp"
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
+#include "diaria/command_types.hpp"
 #include "diaria/key_management.hpp"
 
-void setup_db(const key_repo_paths_t& keypath)
+void setup_db(const key_repo_paths_t& keypath,
+              std::unique_ptr<password_provider> password)
 {
   const auto [pk, sk] = generate_keypair();
   const auto symkey = generate_symkey();
@@ -41,11 +42,8 @@ void setup_db(const key_repo_paths_t& keypath)
     throw std::runtime_error(std::format("Could not create directories: {}",
                                          dir_creation_error.message()));
   };
-  const auto password =
-      keypath.private_key_password
-          .or_else([]() { return std::optional(read_password()); })
-          .value();
-  const auto stored_key = stored_secret_key::store(std::span(sk), password);
+  const auto stored_key =
+      stored_secret_key::store(std::span(sk), password->provide());
   std::ofstream keyfile(keypath.get_private_key_path(),
                         std::ios::out | std::ios::binary | std::ios::trunc);
   if (keyfile.fail()) {

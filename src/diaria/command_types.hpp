@@ -1,5 +1,8 @@
 #pragma once
 #include <filesystem>
+#include <memory>
+#include <string>
+#include <utility>
 
 #include "diaria/key_management.hpp"
 
@@ -33,18 +36,51 @@ struct entry_encryptor_initializer
 struct file_entry_encryptor_initializer : entry_encryptor_initializer
 {
   key_repo_paths_t paths;
+  explicit file_entry_encryptor_initializer(key_repo_paths_t in_paths)
+      : paths(std::move(in_paths))
+  {
+  }
   auto init() -> entry_encryptor override;
 };
 
-struct stored_password_entry_decryptor_initializer : entry_decryptor_initializer
+struct password_provider
 {
-  key_repo_paths_t paths;
-  std::string password;
-  auto init() -> entry_decryptor override;
+  virtual auto provide() -> std::string = 0;
+  virtual ~password_provider() = default;
 };
 
-struct prompt_password_entry_decryptor_initializer : entry_decryptor_initializer
+struct stdin_password_provider : password_provider
 {
+  auto provide() -> std::string override;
+};
+struct stored_password_provider : password_provider
+{
+  std::string password;
+  explicit stored_password_provider(std::string in_password)
+      : password(std::move(in_password))
+  {
+  }
+  auto provide() -> std::string override;
+};
+struct file_password_provider : password_provider
+{
+  std::filesystem::path password_file;
+  explicit file_password_provider(std::filesystem::path in_password_file)
+      : password_file(std::move(in_password_file))
+  {
+  }
+  auto provide() -> std::string override;
+};
+
+struct file_entry_decryptor_initializer : entry_decryptor_initializer
+{
+  std::unique_ptr<password_provider> pp;
   key_repo_paths_t paths;
+  file_entry_decryptor_initializer(std::unique_ptr<password_provider>&& in_pp,
+                                   key_repo_paths_t in_paths)
+      : pp(std::move(in_pp))
+      , paths(std::move(in_paths))
+  {
+  }
   auto init() -> entry_decryptor override;
 };

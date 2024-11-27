@@ -1,7 +1,8 @@
 #pragma once
-#include "diaria/command_types.hpp"
-#include "diaria/key_management.hpp"
+#include <memory>
 
-void summarize_repo(const key_repo_paths_t& keypath,
+#include "diaria/command_types.hpp"
+
+void summarize_repo(std::unique_ptr<entry_decryptor_initializer> keys,
                     const repo_path_t& repo,
                     bool paging);

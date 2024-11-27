@@ -4,7 +4,7 @@ add_library(
     diaria_lib OBJECT
     key_management.cpp
     repo_management.cpp
-    commands_types.cpp
+    command_types.cpp
     commands/summarize.cpp
     commands/repo.cpp
     commands/stats.cpp

@@ -29,7 +29,8 @@
 #include <wordexp.h>
 
 #include "common.hpp"
-#include "crypto/entry.hpp"
+#include "diaria/command_types.hpp"
+#include "diaria/key_management.hpp"
 
 namespace
 {
@@ -178,16 +179,11 @@ auto outfile_entry_writer::write_entry(
   write_to_file(outfile.p, ciphertext);
 }
 
-void add_entry(const key_repo_paths_t& keypath,
+void add_entry(std::unique_ptr<entry_encryptor_initializer> keys,
                std::unique_ptr<input_reader> input,
                std::unique_ptr<entry_writer> output)
 {
   const auto plaintext = input->get_plaintext();
-
-  const auto symkey = load_symkey(keypath.get_symkey_path());
-  const auto pubkey = load_pubkey(keypath.get_pubkey_path());
-
-  const auto encrypted =
-      encrypt(symkey_span_t {symkey}, public_key_span_t {pubkey}, plaintext);
+  const auto encrypted = keys->init().encrypt(plaintext);
   output->write_entry(encrypted);
 }

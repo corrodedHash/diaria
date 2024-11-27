@@ -8,6 +8,7 @@
 #include <ios>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <print>
 #include <span>
@@ -24,11 +25,10 @@
 #include <wordexp.h>
 
 #include "common.hpp"
-#include "crypto/entry.hpp"
-#include "crypto/secret_key.hpp"
+#include "diaria/command_types.hpp"
 #include "diaria/key_management.hpp"
 
-void read_entry(const key_repo_paths_t& keypath,
+void read_entry(std::unique_ptr<entry_decryptor_initializer> keys,
                 const std::filesystem::path& entry,
                 const std::optional<std::filesystem::path>& output)
 {
@@ -38,17 +38,8 @@ void read_entry(const key_repo_paths_t& keypath,
   }
   std::vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
                                       std::istreambuf_iterator<char>());
-  const auto symkey = load_symkey(keypath.get_symkey_path());
 
-  const auto password =
-      keypath.private_key_password
-          .or_else([]() { return std::optional(read_password()); })
-          .value();
-  ;
-  const auto private_key =
-      load_private_key(keypath.get_private_key_path(), password);
-  const auto decrypted = decrypt(
-      symkey_span_t {symkey}, private_key_span_t {private_key}, contents);
+  const auto decrypted = keys->init().decrypt(contents);
   if (output) {
     std::ofstream output_stream(output.value(), std::ios::out);
     if (output_stream.fail()) {

@@ -7,20 +7,17 @@
 #include <fstream>
 #include <ios>
 #include <iterator>
-#include <optional>
 #include <print>
 #include <ranges>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "./summarize.hpp"
 
-#include "crypto/entry.hpp"
-#include "crypto/secret_key.hpp"
+#include "diaria/key_management.hpp"
 #include "diaria/repo_management.hpp"
 
 // TODO: This is an N*m approach over a sorted list
@@ -83,14 +80,10 @@ auto build_relevant_entry_list(
   return relevant_entries | std::ranges::to<std::vector>();
 }
 
-void print_entries(const key_repo_paths_t& keypath,
+void print_entries(entry_decryptor decryptor,
                    const std::ranges::forward_range auto& relevant_entries,
-                   std::string_view password,
                    bool paging)
 {
-  const auto private_key =
-      load_private_key(keypath.get_private_key_path(), password);
-  const auto symkey = load_symkey(keypath.get_symkey_path());
   for (const auto& entry : relevant_entries) {
     std::ifstream stream(entry.second, std::ios::in | std::ios::binary);
     if (stream.fail()) {
@@ -100,8 +93,7 @@ void print_entries(const key_repo_paths_t& keypath,
         (std::istreambuf_iterator<char>(stream)),
         std::istreambuf_iterator<char>());
 
-    const auto decrypted = decrypt(
-        symkey_span_t {symkey}, private_key_span_t {private_key}, contents);
+    const auto decrypted = decryptor.decrypt(contents);
     const std::string decrypted_decoded(decrypted.begin(), decrypted.end());
     if (paging) {
       std::print(
@@ -123,7 +115,7 @@ void print_entries(const key_repo_paths_t& keypath,
   }
 }
 
-void summarize_repo(const key_repo_paths_t& keypath,
+void summarize_repo(std::unique_ptr<entry_decryptor_initializer> keys,
                     const repo_path_t& repo,
                     bool paging)
 {
@@ -146,11 +138,7 @@ void summarize_repo(const key_repo_paths_t& keypath,
     }
   }
 
-  const auto password =
-      keypath.private_key_password
-          .or_else([]() { return std::optional(read_password()); })
-          .value();
-  print_entries(keypath, relevant_entries, password, paging);
+  print_entries(keys->init(), relevant_entries, paging);
   if (paging) {
     std::print(
         "\x1b"
