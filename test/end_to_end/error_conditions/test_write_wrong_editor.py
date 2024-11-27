@@ -3,7 +3,7 @@ from pathlib import Path
 from end_to_end.helper import diaria, key_path
 
 
-def test_find_executable(diaria: Path, key_path: Path, tmp_path: Path):
+def test_write_wrong_editor(diaria: Path, key_path: Path, tmp_path: Path):
     output = subprocess.run(
         [
             diaria,

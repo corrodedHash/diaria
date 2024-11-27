@@ -4,7 +4,7 @@ from .helper import diaria, key_path
 import uuid
 
 
-def test_find_executable(diaria: Path, key_path: Path, tmp_path: Path):
+def test_write_read(diaria: Path, key_path: Path, tmp_path: Path):
     entry_text = str(uuid.uuid4())
     entry_file = tmp_path / "plaintext_entry"
     with open(entry_file, "w", encoding="utf-8") as f:
@@ -43,7 +43,7 @@ def test_find_executable(diaria: Path, key_path: Path, tmp_path: Path):
     assert read_output.stdout.strip() == entry_text
 
 
-def test_find_executable_interactive(diaria: Path, key_path: Path, tmp_path: Path):
+def test_write_read_interactive(diaria: Path, key_path: Path, tmp_path: Path):
     entry_text = str(uuid.uuid4())
     entry_file = tmp_path / "plaintext_entry"
     with open(entry_file, "w", encoding="utf-8") as f:

@@ -4,7 +4,7 @@ from ..helper import diaria, key_path
 import uuid
 
 
-def test_find_executable(diaria: Path, key_path: Path, tmp_path: Path):
+def test_wrong_password(diaria: Path, key_path: Path, tmp_path: Path):
     entry_text = str(uuid.uuid4())
     entry_file = tmp_path / "plaintext_entry"
     with open(entry_file, "w", encoding="utf-8") as f:
