@@ -1,9 +1,11 @@
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <iterator>
 #include <print>
 #include <ranges>
 #include <span>
@@ -58,9 +60,23 @@ auto handle_year(const std::ranges::forward_range auto& entries,
 // NOLINTNEXTLINE(readability-identifier-naming)
 struct RGB
 {
-  unsigned char red;
-  unsigned char green;
-  unsigned char blue;
+  unsigned char red {};
+  unsigned char green {};
+  unsigned char blue {};
+  constexpr explicit RGB(uint32_t hexcode)
+      : red((hexcode >> 16) & 0xff)
+      , green((hexcode >> 8) & 0xff)
+      , blue(hexcode & 0xff)
+  {
+  }
+  constexpr RGB(unsigned char in_red,
+                unsigned char in_green,
+                unsigned char in_blue)
+      : red(in_red)
+      , green(in_green)
+      , blue(in_blue)
+  {
+  }
   [[nodiscard]] auto luminance() const -> double
   {
     // These are magic numbers I got online, just accept it
@@ -91,11 +107,20 @@ auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
   const auto skip_first_day_count =
       (std::chrono::weekday {std::chrono::January / 01 / year}.iso_encoding()
        - 1);
-  constexpr RGB color_atlantis = RGB {0x5A, 0XD5, 0x2D};
-  constexpr RGB color_melrose = RGB {0x91, 0x9B, 0xFF};
-  constexpr RGB color_torea_bay = RGB {0x13, 0x3A, 0x94};
-  constexpr RGB color_black = RGB {0x0, 0x0, 0x0};
-  constexpr RGB color_white = RGB {0xFF, 0xFF, 0xFF};
+  constexpr RGB color_atlantis = RGB {0x5ad52d};
+
+  constexpr RGB color_titan_white = RGB {0xe5e8ff};
+  constexpr RGB color_melrose = RGB {0x919bff};
+  constexpr RGB color_torea_bay = RGB {0x133a94};
+  constexpr RGB color_wild_strawberry = RGB {0xff407e};
+  constexpr RGB color_black = RGB {0x000000};
+  constexpr RGB color_white = RGB {0xFFFFFF};
+
+  std::array<std::pair<uint32_t, RGB>, 4> byte_gradient_mapping = {
+      {{0, color_titan_white},
+       {500, color_melrose},
+       {4000, color_torea_bay},
+       {12000, color_wild_strawberry}}};
 
   constexpr int days_in_week = 7;
   for (unsigned int i = 0; i < days_in_week; ++i) {
@@ -111,10 +136,20 @@ auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
         if (cell_byte_count == 0) {
           return color_atlantis;
         }
-        constexpr double max_bytes = 20000.;
-        return make_gradient(color_melrose,
-                             color_torea_bay,
-                             static_cast<double>(cell_byte_count) / max_bytes);
+        const auto higher_color = std::ranges::partition_point(
+            byte_gradient_mapping,
+            [cell_byte_count](auto a) { return cell_byte_count > a.first; });
+        if (higher_color == byte_gradient_mapping.begin()) {
+          return higher_color->second;
+        }
+        const auto lower_color = std::prev(higher_color);
+        if (higher_color == byte_gradient_mapping.end()) {
+          return lower_color->second;
+        }
+        const auto ratio =
+            static_cast<double>(cell_byte_count - lower_color->first)
+            / static_cast<double>(higher_color->first - lower_color->first);
+        return make_gradient(lower_color->second, higher_color->second, ratio);
       }();
       const auto foreground_color =
           chosen_color.luminance() < 140 ? color_white : color_black;
