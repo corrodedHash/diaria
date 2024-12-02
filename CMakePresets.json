@@ -117,7 +117,6 @@
       "inherits": "ci-linux",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++",
         "ENABLE_COVERAGE": "ON",
         "CMAKE_BUILD_TYPE": "Coverage",
         "CMAKE_CXX_FLAGS_COVERAGE": "-Og -g -fprofile-instr-generate -fcoverage-mapping"
