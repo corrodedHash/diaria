@@ -1,105 +1,95 @@
-#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <iterator>
 #include <print>
 #include <ranges>
 #include <span>
 
 #include "./stats.hpp"
 
+#include <bits/chrono.h>
+#include <bits/ranges_algo.h>
 #include <sys/types.h>
 
 #include "diaria/repo_management.hpp"
+#include "util/rgb.hpp"
 
-auto to_ymd(const auto& input_time)
+auto to_ymd(const std::chrono::utc_clock::time_point& input_time)
 {
   return std::chrono::year_month_day {std::chrono::floor<std::chrono::days>(
       std::chrono::system_clock::time_point((input_time.time_since_epoch())))};
 }
-
-auto handle_year(const std::ranges::forward_range auto& entries,
-                 std::chrono::year year)
-    -> std::pair<std::size_t, std::vector<std::uint32_t>>
+auto calendar_week(const std::chrono::year_month_day& day) -> unsigned int
 {
-  auto relevant_days = entries
-      | std::views::drop_while(
-                           [&](const auto& entry_date)
-                           { return to_ymd(entry_date.first).year() < year; })
-      | std::ranges::views::take_while(
-                           [&](const auto& entry_date)
-                           { return to_ymd(entry_date.first).year() == year; });
-  auto current_day = relevant_days.begin();
-  std::size_t entry_count {};
-  std::vector<std::uint32_t> cells {};
-  for (std::chrono::sys_days i {std::chrono::January / 01 / year};
-       std::chrono::year_month_day {i}.year() == year
-       && i < std::chrono::system_clock::now() + std::chrono::days {1};
-       ++i)
-  {
-    decltype(cells)::value_type day_size {};
-    while (current_day != relevant_days.end()
-           && to_ymd(current_day->first) == std::chrono::year_month_day {i})
-    {
-      day_size += static_cast<std::uint32_t>(
-          std::filesystem::file_size(current_day->second));
-      ++entry_count;
-      std::advance(current_day, 1);
-    }
-    cells.push_back(day_size);
+  constexpr int days_in_week = 7;
+  // Number of days in the first week of the year
+  std::chrono::days second_week_delta {
+      days_in_week
+      - (std::chrono::weekday {std::chrono::January / 01 / day.year()}
+             .iso_encoding()
+         - 1)};
+  std::chrono::year_month_day second_week_start {
+      std::chrono::January / static_cast<int>(1 + second_week_delta.count())
+      / day.year()};
+  if (second_week_start > day) {
+    return 0;
   }
-  assert(entry_count
-         == static_cast<std::size_t>(std::ranges::distance(relevant_days)));
-  return {entry_count, cells};
+  std::chrono::days day_delta =
+      std::chrono::sys_days(day) - std::chrono::sys_days(second_week_start);
+  return static_cast<unsigned int>(day_delta.count() / days_in_week) + 1;
 }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
-struct RGB
+auto days_of_year(std::chrono::year year)
 {
-  unsigned char red {};
-  unsigned char green {};
-  unsigned char blue {};
-  constexpr explicit RGB(uint32_t hexcode)
-      : red((hexcode >> 16) & 0xff)
-      , green((hexcode >> 8) & 0xff)
-      , blue(hexcode & 0xff)
-  {
-  }
-  constexpr RGB(unsigned char in_red,
-                unsigned char in_green,
-                unsigned char in_blue)
-      : red(in_red)
-      , green(in_green)
-      , blue(in_blue)
-  {
-  }
-  [[nodiscard]] auto luminance() const -> double
-  {
-    // These are magic numbers I got online, just accept it
-    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,
-    // readability-magic-numbers)
-    return (0.2126 * red + 0.7152 * green + 0.0722 * blue);
-    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,
-    // readability-magic-numbers)
-  }
-};
+  return std::views::iota(0)
+      | std::views::transform(
+             [year](auto day_delta)
+             {
+               return std::chrono::sys_days {std::chrono::January / 01 / year}
+               + std::chrono::days {day_delta};
+             })
+      | std::views::take_while(
+             [year](auto day)
+             { return std::chrono::year_month_day {day}.year() == year; });
+}
 
-auto make_gradient(const RGB& color_a, const RGB& color_b, double factor)
+auto handle_year(const std::ranges::forward_range auto& entries,
+                 std::chrono::year year) -> std::vector<std::uint32_t>
 {
-  assert(factor >= 0);
-  assert(factor <= 1);
-  const auto red =
-      static_cast<unsigned char>(std::lerp(color_a.red, color_b.red, factor));
-  const auto green = static_cast<unsigned char>(
-      std::lerp(color_a.green, color_b.green, factor));
-  const auto blue =
-      static_cast<unsigned char>(std::lerp(color_a.blue, color_b.blue, factor));
+  auto day_entry_chunks =
+      entries
+      | std::views::chunk_by(
+          [](auto last_entry, auto this_entry)
+          { return to_ymd(last_entry.first) == to_ymd(this_entry.first); });
+  auto current_day_entry_chunk = day_entry_chunks.begin();
 
-  return RGB {red, green, blue};
+  constexpr std::size_t days_in_year = 366;
+  std::vector<std::uint32_t> cells {};
+  cells.reserve(days_in_year);
+
+  for (auto const current_day : days_of_year(year)) {
+    if (current_day_entry_chunk == day_entry_chunks.end()
+        || to_ymd((*current_day_entry_chunk).begin()->first)
+            != std::chrono::year_month_day {current_day})
+    {
+      cells.push_back(0);
+    } else {
+      auto current_day_entry_sizes = *current_day_entry_chunk
+          | std::views::transform(
+              [](auto& entry)
+              {
+                return static_cast<std::uint32_t>(
+                    std::filesystem::file_size(entry.second));
+              });
+
+      cells.push_back(
+          std::ranges::fold_left(current_day_entry_sizes, 0, std::plus {}));
+      ++current_day_entry_chunk;
+    }
+  }
+  return cells;
 }
 
 auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
@@ -107,17 +97,19 @@ auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
   const auto skip_first_day_count =
       (std::chrono::weekday {std::chrono::January / 01 / year}.iso_encoding()
        - 1);
-  constexpr RGB color_atlantis = RGB {0x5ad52d};
+  constexpr RGB color_atlantis = RGB::from_hex(0x5ad52d);
 
-  constexpr RGB color_titan_white = RGB {0xe5e8ff};
-  constexpr RGB color_melrose = RGB {0x919bff};
-  constexpr RGB color_torea_bay = RGB {0x133a94};
-  constexpr RGB color_wild_strawberry = RGB {0xff407e};
-  constexpr RGB color_black = RGB {0x000000};
-  constexpr RGB color_white = RGB {0xFFFFFF};
+  constexpr RGB color_titan_white = RGB::from_hex(0xe5e8ff);
+  constexpr RGB color_melrose = RGB::from_hex(0x919bff);
+  constexpr RGB color_torea_bay = RGB::from_hex(0x133a94);
+  constexpr RGB color_wild_strawberry = RGB::from_hex(0xff407e);
 
-  std::array<std::pair<uint32_t, RGB>, 4> byte_gradient_mapping = {
-      {{0, color_titan_white},
+  constexpr RGB color_black = RGB::from_hex(0x000000);
+  constexpr RGB color_white = RGB::from_hex(0xFFFFFF);
+
+  constexpr std::array<std::pair<uint32_t, RGB>, 5> byte_gradient_mapping = {
+      {{0, color_atlantis},
+       {0, color_titan_white},
        {500, color_melrose},
        {4000, color_torea_bay},
        {12000, color_wild_strawberry}}};
@@ -131,26 +123,8 @@ auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
              | std::views::drop((7 - skip_first_day_count + i) % 7)
              | std::views::stride(7))
     {
-      const auto chosen_color = [&]()
-      {
-        if (cell_byte_count == 0) {
-          return color_atlantis;
-        }
-        const auto higher_color = std::ranges::partition_point(
-            byte_gradient_mapping,
-            [cell_byte_count](auto a) { return cell_byte_count > a.first; });
-        if (higher_color == byte_gradient_mapping.begin()) {
-          return higher_color->second;
-        }
-        const auto lower_color = std::prev(higher_color);
-        if (higher_color == byte_gradient_mapping.end()) {
-          return lower_color->second;
-        }
-        const auto ratio =
-            static_cast<double>(cell_byte_count - lower_color->first)
-            / static_cast<double>(higher_color->first - lower_color->first);
-        return make_gradient(lower_color->second, higher_color->second, ratio);
-      }();
+      const auto chosen_color =
+          map_color_range(byte_gradient_mapping, cell_byte_count);
       const auto foreground_color =
           chosen_color.luminance() < 140 ? color_white : color_black;
       const auto bytes_per_kilobyte = 1000;
@@ -167,6 +141,42 @@ auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
   }
 }
 
+auto print_year_header(std::chrono::year year)
+{
+  constexpr std::array<std::string_view, 12> month_names = {"Jan",
+                                                            "Feb",
+                                                            "Mar",
+                                                            "Apr",
+                                                            "May",
+                                                            "Jun",
+                                                            "Jul",
+                                                            "Aug",
+                                                            "Sep",
+                                                            "Oct",
+                                                            "Nov",
+                                                            "Dec"};
+
+  auto index = 0;
+  constexpr int weekwidth = 3;
+  std::println("    {}", year);
+  std::string line{};
+  for (const auto month : month_names) {
+    auto month_start = std::chrono::year_month_day {
+        year,
+        std::chrono::month {static_cast<unsigned int>(index + 1)},
+        std::chrono::day {1}};
+    index += 1;
+
+    auto week = calendar_week(month_start);
+    if (week * weekwidth < line.length()) {
+      continue;
+    }
+    line += std::string(week * weekwidth - line.length(), ' ');
+    line += month;
+  }
+  std::println("{}", line);
+}
+
 void repo_stats(const repo_path_t& repo)
 {
   const auto entries = list_entries(repo);
@@ -174,18 +184,21 @@ void repo_stats(const repo_path_t& repo)
     std::println("No entries");
     return;
   }
-  auto time = to_ymd(entries.front().first);
-  std::size_t current_index = 0;
-  auto year = time.year();
-  while (current_index < entries.size()) {
-    const auto& [index_delta, cells] =
-        handle_year(std::ranges::subrange(
-                        entries.begin() + static_cast<int64_t>(current_index),
-                        entries.end()),
-                    year);
-    std::println("{}", year);
+  auto entries_by_year =
+      entries
+      | std::views::chunk_by(
+          [](const auto& last_entry, const auto& current_entry)
+          {
+            return to_ymd(last_entry.first).year()
+                == to_ymd(current_entry.first).year();
+          });
+  for (auto const entry_year : entries_by_year) {
+    if (entry_year.empty()) {
+      continue;
+    }
+    const auto year = to_ymd(entry_year.begin()->first).year();
+    const auto cells = handle_year(entry_year, year);
+    print_year_header(year);
     print_year(cells, year);
-    current_index += index_delta;
-    ++year;
   }
 }
