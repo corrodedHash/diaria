@@ -100,8 +100,9 @@ void print_entries(entry_decryptor decryptor,
           "\x1b"
           "c");
     }
-    std::println(
-        "Reading entry from {:%F %H:%M}\n{}\n", entry.first, decrypted_decoded);
+    std::println("Reading entry from {:%F %H:%M}", entry.first);
+    std::println("{}", decrypted_decoded);
+    std::println();
     if (paging) {
       std::println("Press [Enter] for next entry");
       if (std::getchar() == EOF) {

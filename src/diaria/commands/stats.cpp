@@ -1,6 +1,7 @@
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <print>
@@ -21,22 +22,23 @@ auto to_ymd(const std::chrono::utc_clock::time_point& input_time)
   return std::chrono::year_month_day {std::chrono::floor<std::chrono::days>(
       std::chrono::system_clock::time_point((input_time.time_since_epoch())))};
 }
+
 auto calendar_week(const std::chrono::year_month_day& day) -> unsigned int
 {
   constexpr int days_in_week = 7;
   // Number of days in the first week of the year
-  std::chrono::days second_week_delta {
+  const std::chrono::days second_week_delta {
       days_in_week
       - (std::chrono::weekday {std::chrono::January / 01 / day.year()}
              .iso_encoding()
          - 1)};
-  std::chrono::year_month_day second_week_start {
+  const std::chrono::year_month_day second_week_start {
       std::chrono::January / static_cast<int>(1 + second_week_delta.count())
       / day.year()};
   if (second_week_start > day) {
     return 0;
   }
-  std::chrono::days day_delta =
+  const std::chrono::days day_delta =
       std::chrono::sys_days(day) - std::chrono::sys_days(second_week_start);
   return static_cast<unsigned int>(day_delta.count() / days_in_week) + 1;
 }
@@ -137,7 +139,7 @@ auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
                  foreground_color.blue,
                  cell_byte_count / bytes_per_kilobyte);
     }
-    std::println("");
+    std::println();
   }
 }
 
@@ -157,9 +159,9 @@ auto print_year_header(std::chrono::year year)
                                                             "Dec"};
 
   auto index = 0;
-  constexpr int weekwidth = 3;
+  constexpr unsigned int weekwidth = 3;
   std::println("    {}", year);
-  std::string line{};
+  std::string line {};
   for (const auto month : month_names) {
     auto month_start = std::chrono::year_month_day {
         year,
@@ -167,11 +169,12 @@ auto print_year_header(std::chrono::year year)
         std::chrono::day {1}};
     index += 1;
 
-    auto week = calendar_week(month_start);
-    if (week * weekwidth < line.length()) {
+    const auto week = calendar_week(month_start);
+    const auto padding = week * weekwidth;
+    if (padding < line.length()) {
       continue;
     }
-    line += std::string(week * weekwidth - line.length(), ' ');
+    line += std::string(padding - line.length(), ' ');
     line += month;
   }
   std::println("{}", line);
