@@ -1,6 +1,4 @@
-#include <array>
 #include <chrono>
-#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -13,16 +11,15 @@
 #include <iterator>
 #include <memory>
 #include <print>
-#include <ranges>
 #include <span>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "./add_entry.hpp"
 
 #include <fcntl.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -30,56 +27,11 @@
 
 #include "common.hpp"
 #include "diaria/command_types.hpp"
+#include "diaria/editor.hpp"
 #include "diaria/key_management.hpp"
 
 namespace
 {
-auto build_argv(std::string_view cmdline)
-{
-  wordexp_t words {};
-  // NOLINTNEXTLINE(hicpp-signed-bitwise)
-  wordexp(cmdline.data(), &words, WRDE_NOCMD | WRDE_UNDEF | WRDE_SHOWERR);
-
-  const auto word_span = std::span(words.we_wordv, words.we_wordc);
-  const auto owned_word_span = word_span
-      | std::ranges::views::transform([](auto word)
-                                      { return std::string(word); });
-  std::vector<std::string> result(std::begin(owned_word_span),
-                                  std::end(owned_word_span));
-
-  wordfree(&words);
-  return result;
-}
-
-void replace_first(std::string& input_string,
-                   std::string_view to_replace,
-                   std::string_view replace_with)
-{
-  const std::size_t pos = input_string.find(to_replace);
-  if (pos == std::string::npos) {
-    return;
-  }
-  input_string.replace(pos, to_replace.length(), replace_with);
-}
-
-void start_editor(std::string_view cmdline,
-                  const std::filesystem::path& temp_entry_path)
-{
-  auto owned_cmdline = std::string(cmdline);
-  replace_first(owned_cmdline, "%", temp_entry_path.c_str());
-
-  const auto words = build_argv(owned_cmdline);
-  std::vector<char*> argv {};
-  argv.reserve(words.size());
-  for (const auto& word : words) {
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-    argv.push_back(const_cast<char*>(word.data()));
-  }
-  argv.push_back(nullptr);
-  const auto exec_result = execvp(argv[0], argv.data());
-  throw std::runtime_error(
-      std::format("Error during exec editor: {}", exec_result));
-}
 
 struct smart_fd
 {
@@ -114,19 +66,10 @@ auto file_input_reader::get_plaintext() -> std::vector<unsigned char>
   return contents;
 }
 
-auto private_namespace_read()  -> std::vector<unsigned char>{
-  // clone();
-  // CLONE_NEWNS, CLONE_NEWUSER
-  // Map root to current user
-  // Write to /proc/pid/uid_map
-  // mount -t tmpfs -o noswap diaria_entry /tmp/diaria
-
-}
-
 auto editor_input_reader::get_plaintext() -> std::vector<unsigned char>
 {
   std::string temp_entry_path("/tmp/diaria_XXXXXX");
-  const smart_fd entry_fd {mkostemp(temp_entry_path.data(), O_CLOEXEC)};
+  // const smart_fd entry_fd {mkostemp(temp_entry_path.data(), O_CLOEXEC)};
   const auto child_pid = fork();
   if (child_pid == 0) {
     start_editor(cmdline, temp_entry_path);

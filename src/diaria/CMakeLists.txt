@@ -2,6 +2,7 @@
 
 add_library(
     diaria_lib OBJECT
+    editor.cpp
     key_management.cpp
     repo_management.cpp
     command_types.cpp
