@@ -114,6 +114,15 @@ auto file_input_reader::get_plaintext() -> std::vector<unsigned char>
   return contents;
 }
 
+auto private_namespace_read()  -> std::vector<unsigned char>{
+  // clone();
+  // CLONE_NEWNS, CLONE_NEWUSER
+  // Map root to current user
+  // Write to /proc/pid/uid_map
+  // mount -t tmpfs -o noswap diaria_entry /tmp/diaria
+
+}
+
 auto editor_input_reader::get_plaintext() -> std::vector<unsigned char>
 {
   std::string temp_entry_path("/tmp/diaria_XXXXXX");
