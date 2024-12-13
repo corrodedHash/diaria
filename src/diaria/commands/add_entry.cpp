@@ -53,33 +53,8 @@ auto file_input_reader::get_plaintext() -> std::vector<unsigned char>
 
 auto editor_input_reader::get_plaintext() -> std::vector<unsigned char>
 {
-  std::string temp_entry_path("/tmp/diaria_XXXXXX");
-  const auto child_pid = fork();
-  if (child_pid == 0) {
-    start_editor(cmdline, temp_entry_path);
-  }
-
-  int child_status {};
-  waitpid(child_pid, &child_status, 0);
-
-  std::ifstream stream(temp_entry_path, std::ios::in | std::ios::binary);
-  std::vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
-                                      std::istreambuf_iterator<char>());
-  if (stream.fail()) {
-    std::println(
-        stderr,
-        "Error reading diary file. Unencrypted entry is still stored at {}",
-        temp_entry_path);
-    throw std::runtime_error("Could not read diary entry file");
-  }
-  if (contents.empty()) {
-    std::println(stderr,
-                 "Diary entry empty, not saving. Temporary file remains at {}",
-                 temp_entry_path);
-    throw std::runtime_error("Could not create diary entry file");
-  }
-  unlink(temp_entry_path.c_str());
-  return contents;
+  // return interactive_content_entry(cmdline, std::filesystem::path {"/tmp"});
+  return private_namespace_read(cmdline);
 }
 
 void file_entry_writer::write_to_file(const std::filesystem::path& filename,

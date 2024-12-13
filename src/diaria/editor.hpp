@@ -7,5 +7,6 @@
 auto private_namespace_read(std::string_view cmdline)
     -> std::vector<unsigned char>;
 
-void start_editor(std::string_view cmdline,
-                  const std::filesystem::path& temp_entry_path);
+auto interactive_content_entry(std::string_view cmdline,
+                               const std::filesystem::path& temp_file_dir)
+    -> std::vector<unsigned char>;

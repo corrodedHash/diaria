@@ -63,7 +63,7 @@ def test_write_read_interactive(diaria: Path, key_path: Path, tmp_path: Path):
             *diaria_cmd_base,
             "add",
             "--editor",
-            f"sh -c 'cat {entry_file.absolute()} > %'",
+            f"sh -c 'V=\"%\"; echo Writing to $V; cat {entry_file.absolute()} > $V'",
         ],
         check=True,
     )
