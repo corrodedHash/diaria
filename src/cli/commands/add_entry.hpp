@@ -2,7 +2,7 @@
 #include <memory>
 #include <vector>
 
-#include "diaria/command_types.hpp"
+#include "cli/command_types.hpp"
 
 struct input_reader
 {

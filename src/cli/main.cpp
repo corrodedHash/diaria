@@ -12,8 +12,8 @@
 #include <unistd.h>
 
 #include "cli_commands.hpp"
-#include "diaria/command_types.hpp"
-#include "diaria/commands.hpp"
+#include "cli/command_types.hpp"
+#include "cli/commands.hpp"
 
 auto main(int argc, char** argv) -> int
 {

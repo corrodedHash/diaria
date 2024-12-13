@@ -24,11 +24,11 @@
 #include <unistd.h>
 #include <wordexp.h>
 
-#include "common.hpp"
+#include "util/char.hpp"
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
-#include "diaria/command_types.hpp"
-#include "diaria/key_management.hpp"
+#include "cli/command_types.hpp"
+#include "cli/key_management.hpp"
 
 void setup_db(const key_repo_paths_t& keypath,
               std::unique_ptr<password_provider> password)

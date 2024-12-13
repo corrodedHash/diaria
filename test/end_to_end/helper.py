@@ -7,6 +7,7 @@ import warnings
 
 @pytest.fixture
 def diaria():
+    cmake_exe_path = Path("src") / "cli" / "diaria"
     p = os.environ.get("DIARIA")
     if p is not None:
         return Path(p)
@@ -17,27 +18,27 @@ def diaria():
             'Environment variable "DIARIA" not specified. Build directory not found'
         )
 
-    if (build_dir / "diaria").exists():
+    if (build_dir / cmake_exe_path).exists():
         warnings.warn(
             UserWarning(
-                f'Environment variable "DIARIA" not specified. Using {build_dir/"diaria"}'
+                f'Environment variable "DIARIA" not specified. Using {build_dir / cmake_exe_path}'
             )
         )
 
-        return build_dir / "diaria"
-    if (build_dir / "dev" / "diaria").exists():
+        return build_dir / cmake_exe_path
+    if (build_dir / "dev" / cmake_exe_path).exists():
         warnings.warn(
             UserWarning(
-                f'Environment variable "DIARIA" not specified. Using {build_dir/"dev"/"diaria"}'
+                f'Environment variable "DIARIA" not specified. Using {build_dir / "dev" / cmake_exe_path}'
             )
         )
 
-        return build_dir / "dev" / "diaria"
+        return build_dir / "dev" / cmake_exe_path
 
     recursive_build_dir = [
-        (x / "diaria")
+        (x / cmake_exe_path)
         for x in build_dir.iterdir()
-        if x.is_dir() and (x / "diaria").is_file()
+        if x.is_dir() and (x / cmake_exe_path).is_file()
     ]
     diaria_entry = max(
         [(x.stat().st_ctime_ns, x) for x in recursive_build_dir], key=lambda x: x[0]

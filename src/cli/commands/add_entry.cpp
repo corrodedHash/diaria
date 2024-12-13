@@ -25,10 +25,10 @@
 #include <unistd.h>
 #include <wordexp.h>
 
-#include "common.hpp"
-#include "diaria/command_types.hpp"
-#include "diaria/editor.hpp"
-#include "diaria/key_management.hpp"
+#include "util/char.hpp"
+#include "cli/command_types.hpp"
+#include "cli/editor.hpp"
+#include "cli/key_management.hpp"
 
 namespace
 {
@@ -53,8 +53,8 @@ auto file_input_reader::get_plaintext() -> std::vector<unsigned char>
 
 auto editor_input_reader::get_plaintext() -> std::vector<unsigned char>
 {
-  // return interactive_content_entry(cmdline, std::filesystem::path {"/tmp"});
-  return private_namespace_read(cmdline);
+  return interactive_content_entry(cmdline, std::filesystem::path {"/tmp"});
+  // return private_namespace_read(cmdline);
 }
 
 void file_entry_writer::write_to_file(const std::filesystem::path& filename,

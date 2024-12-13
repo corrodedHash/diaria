@@ -1,5 +1,5 @@
 install(
-    TARGETS executable_exe
+    TARGETS diaria_cli
     RUNTIME COMPONENT executable_Runtime
 )
 

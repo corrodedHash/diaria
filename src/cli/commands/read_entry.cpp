@@ -24,9 +24,9 @@
 #include <unistd.h>
 #include <wordexp.h>
 
-#include "common.hpp"
-#include "diaria/command_types.hpp"
-#include "diaria/key_management.hpp"
+#include "util/char.hpp"
+#include "cli/command_types.hpp"
+#include "cli/key_management.hpp"
 
 void read_entry(std::unique_ptr<entry_decryptor_initializer> keys,
                 const std::filesystem::path& entry,

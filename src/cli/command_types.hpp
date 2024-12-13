@@ -4,7 +4,7 @@
 #include <string>
 #include <utility>
 
-#include "diaria/key_management.hpp"
+#include "cli/key_management.hpp"
 
 struct input_file_t
 {

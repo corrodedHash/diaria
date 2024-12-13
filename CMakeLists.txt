@@ -33,24 +33,7 @@ endif()
 add_subdirectory(external)
 add_subdirectory(src)
 
-# ---- Declare executable ----
-
-add_executable(executable_exe src/main.cpp src/cli_commands.cpp)
-add_executable(executable::exe ALIAS executable_exe)
-
-set_property(TARGET executable_exe PROPERTY OUTPUT_NAME diaria)
-
-target_compile_features(executable_exe PRIVATE cxx_std_23)
-
-target_link_libraries(executable_exe PRIVATE crypto_lib diaria_lib)
-target_include_directories(executable_exe SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/external)
-
 configure_file(src/project_info.hpp.in generated/project_info.hpp @ONLY)
-target_include_directories(executable_exe PRIVATE ${PROJECT_BINARY_DIR}/generated)
-
-if (BUILD_STATIC_BINARY)
-target_link_options(executable_exe PRIVATE -static-libgcc -static-libstdc++)
-endif()
 
 
 # ---- Install rules ----

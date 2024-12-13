@@ -3,9 +3,9 @@
 
 #include "./command_types.hpp"
 
-#include "common.hpp"
+#include "util/char.hpp"
 #include "crypto/secret_key.hpp"
-#include "diaria/key_management.hpp"
+#include "cli/key_management.hpp"
 
 namespace
 {

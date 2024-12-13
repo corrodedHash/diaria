@@ -14,7 +14,7 @@
 #include <bits/ranges_algo.h>
 #include <sys/types.h>
 
-#include "diaria/repo_management.hpp"
+#include "cli/repo_management.hpp"
 #include "util/rgb.hpp"
 
 auto to_ymd(const std::chrono::utc_clock::time_point& input_time)

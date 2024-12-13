@@ -17,8 +17,8 @@
 
 #include "./summarize.hpp"
 
-#include "diaria/key_management.hpp"
-#include "diaria/repo_management.hpp"
+#include "cli/key_management.hpp"
+#include "cli/repo_management.hpp"
 
 // TODO: This is an N*m approach over a sorted list
 // This is a place to optimize, but only once we are managing a billion entries

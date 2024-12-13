@@ -8,7 +8,7 @@ find_package(Catch2 3 REQUIRED)
 project(executableTests LANGUAGES CXX)
 
 add_executable(unit_tests src/crypto_primitives_test.cpp src/entry_test.cpp src/private_key_test.cpp)
-target_link_libraries(unit_tests PRIVATE Catch2::Catch2WithMain crypto_lib diaria_lib)
+target_link_libraries(unit_tests PRIVATE Catch2::Catch2WithMain crypto_lib)
 target_compile_features(unit_tests PRIVATE cxx_std_23)
 
 include(CTest)

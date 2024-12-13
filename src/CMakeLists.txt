@@ -1,2 +1,2 @@
 add_subdirectory(crypto)
-add_subdirectory(diaria)
+add_subdirectory(cli)

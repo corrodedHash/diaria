@@ -7,10 +7,10 @@ endif()
 
 add_custom_target(
     run-exe
-    COMMAND executable_exe
+    COMMAND diaria_cli
     VERBATIM
 )
-add_dependencies(run-exe executable_exe)
+add_dependencies(run-exe diaria_cli)
 
 option(BUILD_DOCS "Build documentation using Doxygen and m.css" OFF)
 if(BUILD_DOCS)

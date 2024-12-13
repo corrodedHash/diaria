@@ -14,8 +14,8 @@
 
 #include <sodium.h>
 
-#include "common.hpp"
-#include "diaria/command_types.hpp"
+#include "util/char.hpp"
+#include "cli/command_types.hpp"
 
 namespace views = std::ranges::views;
 

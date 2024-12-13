@@ -2,8 +2,8 @@
 
 #include "./cli_commands.hpp"
 
-#include "diaria/command_types.hpp"
-#include "diaria/commands/add_entry.hpp"
+#include "cli/command_types.hpp"
+#include "cli/commands/add_entry.hpp"
 #include "project_info.hpp"
 #include "xdg_paths.hpp"
 

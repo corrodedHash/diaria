@@ -108,7 +108,7 @@ auto interactive_content_entry(std::string_view cmdline,
 
 void write_to_file(const std::filesystem::path& path, const std::string& data)
 {
-  smart_fd file_descriptor {
+  const smart_fd file_descriptor {
       open(path.c_str(), O_WRONLY | O_NOCTTY | O_CLOEXEC)};
   if (file_descriptor.fd == -1) {
     throw std::runtime_error(std::format("Could not open {}", path.c_str()));
@@ -148,8 +148,8 @@ struct editor_args
 void write_to_pipe(int pipe_fd, std::span<unsigned char> content)
 {
   auto left_to_write = std::span(content);
-  while (left_to_write.size() > 0) {
-    ssize_t written =
+  while (!left_to_write.empty()) {
+    const ssize_t written =
         write(pipe_fd, left_to_write.data(), left_to_write.size());
     if (written == -1) {
       throw std::runtime_error("Writing to pipe");
@@ -190,7 +190,7 @@ auto editor_in_private_namespace(void* arg_raw) -> int
     throw std::runtime_error("Could not create temporary directory for entry");
   }
 
-  std::string mount_args = "noswap";
+  const std::string mount_args = "noswap";
   if (mount("tmpfs", mount_dir.data(), "tmpfs", 0, mount_args.c_str()) == -1) {
     throw std::runtime_error("Could not mount tmpfs");
   }
@@ -221,10 +221,10 @@ auto private_namespace_read(std::string_view cmdline)
   char* stack_top = stack->data() + stack->size();
 
   editor_args args {cmdline, pipefd[1]};
-  pid_t pid = clone(editor_in_private_namespace,
-                    stack_top,
-                    CLONE_NEWNS | CLONE_NEWUSER | SIGCHLD,
-                    &args);
+  pid_t const pid = clone(editor_in_private_namespace,
+                          stack_top,
+                          CLONE_NEWNS | CLONE_NEWUSER | SIGCHLD,
+                          &args);
   if (pid == -1) {
     throw std::runtime_error("Could not clone");
   }

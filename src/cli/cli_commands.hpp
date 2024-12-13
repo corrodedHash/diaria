@@ -2,8 +2,8 @@
 #include <memory>
 #include <CLI11/CLI11.hpp>
 
-#include "diaria/command_types.hpp"
-#include "diaria/key_management.hpp"
+#include "cli/command_types.hpp"
+#include "cli/key_management.hpp"
 namespace cli_commands
 {
 struct base

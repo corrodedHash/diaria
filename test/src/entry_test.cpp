@@ -2,7 +2,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "common.hpp"
+#include "util/char.hpp"
 #include "crypto/secret_key.hpp"
 #include "util.hpp"
 
