@@ -32,21 +32,6 @@
 
 namespace
 {
-
-struct smart_fd
-{
-  explicit smart_fd(int new_fd)
-      : fd(new_fd)
-  {
-  }
-  smart_fd(const smart_fd&) = delete;
-  smart_fd(smart_fd&&) = delete;
-  auto operator=(const smart_fd&) -> smart_fd& = delete;
-  auto operator=(smart_fd&&) -> smart_fd& = delete;
-  int fd;
-  ~smart_fd() { close(fd); }
-};
-
 auto get_iso_timestamp_utc() -> std::string
 {
   return std::format("{:%FT%T}",
@@ -69,7 +54,6 @@ auto file_input_reader::get_plaintext() -> std::vector<unsigned char>
 auto editor_input_reader::get_plaintext() -> std::vector<unsigned char>
 {
   std::string temp_entry_path("/tmp/diaria_XXXXXX");
-  // const smart_fd entry_fd {mkostemp(temp_entry_path.data(), O_CLOEXEC)};
   const auto child_pid = fork();
   if (child_pid == 0) {
     start_editor(cmdline, temp_entry_path);

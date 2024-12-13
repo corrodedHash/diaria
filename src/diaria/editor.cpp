@@ -23,6 +23,8 @@
 #include <unistd.h>
 #include <wordexp.h>
 
+#include "util/smart_fd.hpp"
+
 auto build_argv(std::string_view cmdline)
 {
   wordexp_t words {};
@@ -73,16 +75,14 @@ void start_editor(std::string_view cmdline,
 // Helper function to write to a file
 void write_to_file(const std::filesystem::path& path, const std::string& data)
 {
-  int fd = open(path.c_str(), O_WRONLY | O_CLOEXEC);
-  if (fd == -1) {
-    perror("open");
-    exit(EXIT_FAILURE);
+  smart_fd file_descriptor {open(path.c_str(), O_WRONLY | O_CLOEXEC)};
+  if (file_descriptor.fd == -1) {
+    throw std::runtime_error(std::format("Could not open {}", path.c_str()));
   }
-  if (write(fd, data.c_str(), data.size()) == -1) {
-    perror("write");
-    exit(EXIT_FAILURE);
+  if (write(file_descriptor.fd, data.c_str(), data.size()) == -1) {
+    throw std::runtime_error(
+        std::format("Could not write to {}", path.c_str()));
   }
-  close(fd);
 }
 
 void set_uid_map()
@@ -109,8 +109,14 @@ void set_uid_map()
   write_to_file(gid_map_path, std::format("{} {} 1\n", gid, gid));
 }
 
-auto editor_in_private_namespace(void* /*arg*/) -> int
+struct editor_args
 {
+  std::string_view cmdline;
+};
+
+auto editor_in_private_namespace(void* arg_raw) -> int
+{
+  auto* arg = static_cast<editor_args*>(arg_raw);
   set_uid_map();
 
   constexpr std::string_view mount_dir {"/tmp/myns_mount"};
@@ -126,12 +132,11 @@ auto editor_in_private_namespace(void* /*arg*/) -> int
     throw std::runtime_error("Could not mount tmpfs");
   }
 
-  // Keep the namespace alive
-  sleep(5);
+  start_editor(arg->cmdline, std::filesystem::path {mount_dir} / "entry");
 
   // Unmount the tmpfs
   if (umount(mount_dir.data()) == -1) {
-    perror("umount");
+    throw std::runtime_error("Could not unmount tmpfs");
   }
 
   return 0;
@@ -149,10 +154,11 @@ auto private_namespace_read(std::string_view cmdline)
   char* stack_top = stack->data() + stack->size();
 
   // Create child process with clone
+  editor_args args {cmdline};
   pid_t pid = clone(editor_in_private_namespace,
                     stack_top,
                     CLONE_NEWNS | CLONE_NEWUSER | SIGCHLD,
-                    nullptr);
+                    &args);
   if (pid == -1) {
     throw std::runtime_error("Could not clone");
   }
