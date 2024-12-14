@@ -1,0 +1,13 @@
+diff --git a/cmake/ftxui_install.cmake b/cmake/ftxui_install.cmake
+index 87ca8e8..401c34d 100644
+--- a/cmake/ftxui_install.cmake
++++ b/cmake/ftxui_install.cmake
+@@ -39,7 +39,7 @@ configure_package_config_file(
+   )
+ write_basic_package_version_file(
+   "${CMAKE_CURRENT_BINARY_DIR}/cmake/ftxui-config-version.cmake"
+-  VERSION ${PACKAGE_VERSION}
++  VERSION ${PROJECT_VERSION}
+   COMPATIBILITY SameMajorVersion
+   )
+ install(

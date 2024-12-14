@@ -6,3 +6,4 @@ endif()
 
 add_subdirectory(libsodium)
 add_subdirectory(liblzma)
+add_subdirectory(ftxui)

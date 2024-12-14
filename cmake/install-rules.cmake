@@ -1,6 +1,6 @@
 install(
     TARGETS diaria_cli
-    RUNTIME COMPONENT executable_Runtime
+    RUNTIME COMPONENT DIARIA_Runtime
 )
 
 if(PROJECT_IS_TOP_LEVEL)
