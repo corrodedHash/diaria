@@ -1,0 +1,33 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 14,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "local-base",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_COLOR_DIAGNOSTICS": "ON",
+        "LINK_OPTIONS": "-fuse-ld=mold"
+      },
+      "environment": {
+        "CXX": "sccache clang++"
+      }
+    },
+    {
+      "name": "dev-local",
+      "inherits": ["dev", "local-base"],
+      "generator": "Ninja",
+      "binaryDir": "build/dev"
+    },
+    {
+      "name": "dev-san-local",
+      "inherits": ["dev-san", "local-base"],
+      "generator": "Ninja",
+      "binaryDir": "build/san"
+    }
+  ]
+}
