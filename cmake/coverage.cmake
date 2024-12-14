@@ -16,8 +16,8 @@ add_custom_target(
 add_custom_target(
     coverage
     DEPENDS coverage_merge
-    COMMAND llvm-cov show --format=html ${CMAKE_BINARY_DIR}/diaria --instr-profile ${CMAKE_BINARY_DIR}/coverage.profdata -o ${CMAKE_BINARY_DIR}/coverage_html
-    COMMAND llvm-cov report ${CMAKE_BINARY_DIR}/diaria --instr-profile ${CMAKE_BINARY_DIR}/coverage.profdata
+    COMMAND llvm-cov show --format=html ${CMAKE_BINARY_DIR}/src/cli/diaria --instr-profile ${CMAKE_BINARY_DIR}/coverage.profdata -o ${CMAKE_BINARY_DIR}/coverage_html
+    COMMAND llvm-cov report ${CMAKE_BINARY_DIR}/src/cli/diaria --instr-profile ${CMAKE_BINARY_DIR}/coverage.profdata
     COMMENT "Generating coverage report"
     VERBATIM
 )
