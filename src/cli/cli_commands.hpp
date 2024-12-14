@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include <CLI11/CLI11.hpp>
+#include "CLI11/CLI11.hpp"
 
 #include "cli/command_types.hpp"
 #include "cli/key_management.hpp"

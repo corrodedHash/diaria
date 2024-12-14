@@ -12,13 +12,13 @@ target_compile_features(diaria_tui PRIVATE cxx_std_23)
 
 target_link_libraries(diaria_tui
     PRIVATE crypto_lib
-    INTERFACE diaria_hardening
+    PRIVATE diaria_hardening
+    PRIVATE diaria_project_info
+    PRIVATE CLI11
     PRIVATE ftxui::screen
     PRIVATE ftxui::dom
     PRIVATE ftxui::component)
 
-target_include_directories(diaria_tui SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/external)
-target_include_directories(diaria_tui PRIVATE ${PROJECT_BINARY_DIR}/generated)
 
 
 if (BUILD_STATIC_BINARY)

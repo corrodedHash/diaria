@@ -14,7 +14,9 @@ target_include_directories(
 )
 
 target_link_libraries(
-  crypto_lib PUBLIC libsodium liblzma INTERFACE diaria_hardening
+  crypto_lib
+  PUBLIC libsodium liblzma
+  PRIVATE diaria_hardening
 )
 
 target_compile_features(crypto_lib PUBLIC cxx_std_23)

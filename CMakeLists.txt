@@ -11,23 +11,10 @@ project(
     HOMEPAGE_URL "https://github.com/corrodedHash/diaria"
     LANGUAGES CXX
 )
-
-add_library(diaria_hardening INTERFACE)
-target_compile_definitions(diaria_hardening INTERFACE
-  -D_GLIBCXX_ASSERTIONS=1)
-
-target_compile_options(diaria_hardening INTERFACE
-  -fstack-protector-strong
-  -fcf-protection=full -fstack-clash-protection -Wall -Wextra -Wpedantic
-  -Wconversion -Wsign-conversion -Wcast-qual -Wformat=2 -Wundef -Werror=float-equal
-  -Wshadow -Wcast-align -Wunused -Wnull-dereference -Wdouble-promotion -Wimplicit-fallthrough
-  -Wextra-semi -Woverloaded-virtual -Wnon-virtual-dtor -Wold-style-cast)
-
-target_link_options(diaria_hardening INTERFACE
-  -Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now,-z,nodlopen)
-
+include(cmake/hardening.cmake)
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
+
 
 # ---- Developer mode ----
 
@@ -43,11 +30,12 @@ endif()
 
 # ---- Includes ----
 
+configure_file(src/project_info.hpp.in generated/project_info.hpp @ONLY)
+add_library(diaria_project_info INTERFACE)
+target_include_directories(diaria_project_info INTERFACE ${PROJECT_BINARY_DIR}/generated)
+
 add_subdirectory(external)
 add_subdirectory(src)
-
-configure_file(src/project_info.hpp.in generated/project_info.hpp @ONLY)
-
 
 # ---- Install rules ----
 
