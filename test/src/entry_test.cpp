@@ -2,9 +2,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "util/char.hpp"
 #include "crypto/secret_key.hpp"
 #include "util.hpp"
+#include "util/char.hpp"
 
 TEST_CASE("Check that entry gets recorded and can be decrypted")
 {

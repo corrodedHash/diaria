@@ -7,10 +7,10 @@
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
 
-#include "util/char.hpp"
 #include "crypto/compress.hpp"
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
+#include "util/char.hpp"
 using namespace std::literals;
 
 #include "util.hpp"
