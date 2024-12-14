@@ -1,5 +1,7 @@
 install(
-    TARGETS diaria_cli
+    TARGETS
+      diaria_cli
+      # diaria_tui
     RUNTIME COMPONENT DIARIA_Runtime
 )
 

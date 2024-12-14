@@ -4,9 +4,7 @@ add_executable(diaria_tui
     main.cpp
     )
 
-set_property(TARGET diaria_tui PROPERTY OUTPUT_NAME diaria-tui
- 
-  )
+set_property(TARGET diaria_tui PROPERTY OUTPUT_NAME diaria-tui)
 
 target_compile_features(diaria_tui PRIVATE cxx_std_23)
 
@@ -30,5 +28,3 @@ target_include_directories(
     PUBLIC
     "\$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>"
 )
-
-target_compile_features(diaria_tui PUBLIC cxx_std_23)
