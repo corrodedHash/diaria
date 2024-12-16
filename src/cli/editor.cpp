@@ -121,10 +121,10 @@ void write_to_file(const std::filesystem::path& path, const std::string& data)
   }
 }
 
-void set_uid_map()
+void set_uid_map(uid_t uid, gid_t gid)
 {
-  uid_t uid = getuid();
-  gid_t gid = getgid();
+  // uid_t uid = getuid();
+  // gid_t gid = getgid();
 
   auto proc_path = std::filesystem::path {"/proc"} / "self";
 
@@ -142,6 +142,8 @@ void set_uid_map()
 struct editor_args
 {
   std::string_view cmdline;
+  uid_t parent_uid;
+  gid_t parent_gid;
   int tx_fd;
 };
 
@@ -167,7 +169,7 @@ auto read_from_pipe(int pipe_fd) -> std::vector<unsigned char>
   while ((bytes_read = read(pipe_fd, buffer.data(), buffer.size())) > 0) {
     const auto bufferspan =
         std::span(buffer.begin(), static_cast<std::size_t>(bytes_read));
-
+    std::println("{} bytes read", bytes_read);
     result.insert(result.end(), bufferspan.begin(), bufferspan.end());
   }
 
@@ -180,7 +182,7 @@ auto read_from_pipe(int pipe_fd) -> std::vector<unsigned char>
 auto editor_in_private_namespace(void* arg_raw) -> int
 {
   auto* arg = static_cast<editor_args*>(arg_raw);
-  set_uid_map();
+  set_uid_map(arg->parent_uid, arg->parent_gid);
 
   constexpr std::string_view mount_dir {"/tmp/diaria"};
 
@@ -190,9 +192,10 @@ auto editor_in_private_namespace(void* arg_raw) -> int
     throw std::runtime_error("Could not create temporary directory for entry");
   }
 
-  const std::string mount_args = "noswap";
-  if (mount("tmpfs", mount_dir.data(), "tmpfs", 0, mount_args.c_str()) == -1) {
-    throw std::runtime_error("Could not mount tmpfs");
+  // const std::string mount_args = "noswap";
+  if (mount("tmpfs", mount_dir.data(), "tmpfs", 0, nullptr) == -1) {
+    throw std::runtime_error(std::format(
+        "Could not mount tmpfs; Errno {} [{}]", errno, strerror(errno)));
   }
 
   auto content = interactive_content_entry(arg->cmdline, mount_dir);
@@ -203,7 +206,7 @@ auto editor_in_private_namespace(void* arg_raw) -> int
   }
 
   write_to_pipe(arg->tx_fd, content);
-
+  close(arg->tx_fd);
   return 0;
 }
 
@@ -220,7 +223,7 @@ auto private_namespace_read(std::string_view cmdline)
   auto stack = std::make_unique<std::array<char, stack_size>>();
   char* stack_top = stack->data() + stack->size();
 
-  editor_args args {cmdline, pipefd[1]};
+  editor_args args {cmdline, getuid(), getgid(), pipefd[1]};
   pid_t const pid = clone(editor_in_private_namespace,
                           stack_top,
                           CLONE_NEWNS | CLONE_NEWUSER | SIGCHLD,
@@ -228,8 +231,11 @@ auto private_namespace_read(std::string_view cmdline)
   if (pid == -1) {
     throw std::runtime_error("Could not clone");
   }
+  close(pipefd[1]);
 
+  std::println("Waiting for content...");
   auto content = read_from_pipe(pipefd[0]);
+  std::println("Received content");
 
   // Wait for the child process to complete
   if (waitpid(pid, nullptr, 0) == -1) {
