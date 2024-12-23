@@ -24,9 +24,9 @@
 #include <unistd.h>
 #include <wordexp.h>
 
-#include "util/char.hpp"
 #include "cli/command_types.hpp"
 #include "cli/key_management.hpp"
+#include "util/char.hpp"
 
 void read_entry(std::unique_ptr<entry_decryptor_initializer> keys,
                 const std::filesystem::path& entry,
@@ -40,14 +40,14 @@ void read_entry(std::unique_ptr<entry_decryptor_initializer> keys,
                                       std::istreambuf_iterator<char>());
 
   const auto decrypted = keys->init().decrypt(contents);
-  if (output) {
-    std::ofstream output_stream(output.value(), std::ios::out);
-    if (output_stream.fail()) {
-      throw std::runtime_error("Could not open entry file");
-    }
-    output_stream.write(make_signed_char(decrypted.data()),
-                        static_cast<std::streamsize>(decrypted.size()));
-  } else {
-    std::print("{}\n", std::string(decrypted.begin(), decrypted.end()));
+  if (!output) {
+    std::println("{}", std::string(decrypted.begin(), decrypted.end()));
+    return;
   }
+  std::ofstream output_stream(output.value(), std::ios::out);
+  if (output_stream.fail()) {
+    throw std::runtime_error("Could not open entry file");
+  }
+  output_stream.write(make_signed_char(decrypted.data()),
+                      static_cast<std::streamsize>(decrypted.size()));
 }

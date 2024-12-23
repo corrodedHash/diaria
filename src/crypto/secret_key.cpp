@@ -7,9 +7,9 @@
 
 #include "secret_key.hpp"
 
+#include <sodium/crypto_box_curve25519xchacha20poly1305.h>
 #include <sodium/crypto_pwhash_scryptsalsa208sha256.h>
 #include <sodium/crypto_secretbox_xchacha20poly1305.h>
-#include <sodium/crypto_box_curve25519xchacha20poly1305.h>
 #include <sodium/randombytes.h>
 
 namespace
@@ -21,7 +21,7 @@ auto derive_key(std::string_view password, const Salt& salt) -> symkey_t
   symkey_t key {};
 
   if (crypto_pwhash_scryptsalsa208sha256(
-          key.begin(),
+          key.data(),
           key.size(),
           password.begin(),
           password.length(),
@@ -111,5 +111,5 @@ auto generate_keypair() -> std::pair<public_key_t, private_key_t>
   {
     throw std::invalid_argument("Error generating keypair");
   }
-  return std::make_pair(recipient_pk, recipient_sk);
+  return {recipient_pk, std::move(recipient_sk)};
 }

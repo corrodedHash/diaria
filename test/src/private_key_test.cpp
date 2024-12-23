@@ -6,7 +6,7 @@
 TEST_CASE("Private key serialization")
 {
   auto [pk, sk] = generate_keypair();
-  auto stored = stored_secret_key::store(sk, "abc");
+  auto stored = stored_secret_key::store(sk.span(), "abc");
   auto extracted = stored.get_serialized_key();
   auto restored = stored_secret_key(extracted);
   auto restored_sk = restored.extract_key("abc");

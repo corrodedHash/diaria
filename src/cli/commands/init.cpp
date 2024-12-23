@@ -11,7 +11,6 @@
 #include <memory>
 #include <print>
 #include <ranges>
-#include <span>
 #include <stdexcept>
 #include <system_error>
 #include <utility>
@@ -24,11 +23,11 @@
 #include <unistd.h>
 #include <wordexp.h>
 
-#include "util/char.hpp"
-#include "crypto/entry.hpp"
-#include "crypto/secret_key.hpp"
 #include "cli/command_types.hpp"
 #include "cli/key_management.hpp"
+#include "crypto/entry.hpp"
+#include "crypto/secret_key.hpp"
+#include "util/char.hpp"
 
 void setup_db(const key_repo_paths_t& keypath,
               std::unique_ptr<password_provider> password)
@@ -43,7 +42,7 @@ void setup_db(const key_repo_paths_t& keypath,
                                          dir_creation_error.message()));
   };
   const auto stored_key =
-      stored_secret_key::store(std::span(sk), password->provide());
+      stored_secret_key::store(sk.span(), password->provide());
   std::ofstream keyfile(keypath.get_private_key_path(),
                         std::ios::out | std::ios::binary | std::ios::trunc);
   if (keyfile.fail()) {
