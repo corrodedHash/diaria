@@ -1,9 +1,9 @@
 #include <cstddef>
 #include <cstdlib>
 #include <ranges>
-#include <stdexcept>
 
-#include <sodium/utils.h>
+auto diaria_sodium_malloc(std::size_t size) -> void*;
+void diaria_sodium_free(void* pointer);
 
 template<std::size_t Size>
 class safe_array
@@ -11,20 +11,29 @@ class safe_array
   std::span<unsigned char, Size> buffer;
 
 public:
-  explicit safe_array()
-      : buffer(static_cast<unsigned char*>(sodium_malloc(Size)), Size)
+  safe_array()
+      : buffer(static_cast<unsigned char*>(diaria_sodium_malloc(Size)), Size)
   {
     if (buffer.data() == nullptr) {
       throw std::runtime_error("Could not allocate safe memory");
     }
   }
-
+  ~safe_array() { diaria_sodium_free(buffer.data()); }
   safe_array(const safe_array&) = delete;
   auto operator=(const safe_array&) -> safe_array& = delete;
-  safe_array(safe_array&&) = default;
-  auto operator=(safe_array&&) -> safe_array& = default;
-
-  ~safe_array() { sodium_free(buffer.data()); }
+  safe_array(safe_array&& other) noexcept
+      : buffer(other.buffer)
+  {
+    other.buffer = std::span<unsigned char, Size>(
+        static_cast<unsigned char*>(nullptr), Size);
+  }
+  auto operator=(safe_array&& other) noexcept -> safe_array&
+  {
+    buffer = other.buffer;
+    other.buffer = std::span<unsigned char, Size>(
+        static_cast<unsigned char*>(nullptr), Size);
+    return *this;
+  }
 
   [[nodiscard]] auto begin() const { return buffer.cbegin(); }
   [[nodiscard]] auto span() const { return buffer; }

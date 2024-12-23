@@ -5,6 +5,7 @@ add_library(
     secret_key.cpp
     entry.cpp
     compress.cpp
+    safe_buffer.cpp
 )
 
 target_include_directories(
