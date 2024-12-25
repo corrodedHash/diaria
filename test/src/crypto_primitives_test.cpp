@@ -37,6 +37,7 @@ TEST_CASE("Small compression and decompression")
   auto decompressed = decompress(compressed);
   REQUIRE_THAT(decompressed, equals_range(input));
 }
+
 TEST_CASE("Large compression and decompression")
 {
   std::vector<unsigned char> input;

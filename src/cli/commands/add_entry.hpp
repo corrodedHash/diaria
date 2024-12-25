@@ -1,12 +1,12 @@
 #pragma once
 #include <memory>
-#include <vector>
 
 #include "cli/command_types.hpp"
+#include "crypto/safe_buffer.hpp"
 
 struct input_reader
 {
-  virtual auto get_plaintext() -> std::vector<unsigned char> = 0;
+  virtual auto get_plaintext() -> safe_vector<unsigned char> = 0;
   virtual ~input_reader() = default;
 };
 
@@ -14,14 +14,14 @@ struct file_input_reader final : input_reader
 {
   input_file_t input_file;
 
-  auto get_plaintext() -> std::vector<unsigned char> override;
+  auto get_plaintext() -> safe_vector<unsigned char> override;
 };
 
 struct editor_input_reader final : input_reader
 {
   std::string_view cmdline;
 
-  auto get_plaintext() -> std::vector<unsigned char> override;
+  auto get_plaintext() -> safe_vector<unsigned char> override;
 };
 
 struct entry_writer

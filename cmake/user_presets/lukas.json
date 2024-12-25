@@ -24,6 +24,12 @@
       "binaryDir": "build/dev"
     },
     {
+      "name": "dev-tidy-local",
+      "inherits": ["dev-tidy", "local-base"],
+      "generator": "Ninja",
+      "binaryDir": "build/tidy"
+    },
+    {
       "name": "dev-san-local",
       "inherits": ["dev-san", "local-base"],
       "generator": "Ninja",

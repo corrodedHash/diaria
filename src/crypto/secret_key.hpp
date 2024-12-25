@@ -20,7 +20,7 @@ struct array_to_const_span<std::array<X, Size>>
   using result_t = std::span<const X, Size>;
 };
 template<std::size_t Size>
-struct array_to_const_span<safe_array<Size>>
+struct array_to_const_span<safe_array<unsigned char, Size>>
 {
   using result_t = std::span<const unsigned char, Size>;
 };
@@ -28,17 +28,19 @@ template<class X>
 using array_to_const_span_t = array_to_const_span<X>::result_t;
 
 using private_key_t =
-    safe_array<crypto_box_curve25519xchacha20poly1305_SECRETKEYBYTES>;
+    safe_array<unsigned char,
+               crypto_box_curve25519xchacha20poly1305_SECRETKEYBYTES>;
 using public_key_t =
     std::array<unsigned char,
                crypto_box_curve25519xchacha20poly1305_PUBLICKEYBYTES>;
-using symkey_t = safe_array<crypto_secretbox_xchacha20poly1305_KEYBYTES>;
+using symkey_t =
+    safe_array<unsigned char, crypto_secretbox_xchacha20poly1305_KEYBYTES>;
 
 struct symkey_span_t
 {
   array_to_const_span_t<symkey_t> element;
-  explicit symkey_span_t(const symkey_t& s)
-      : element(s.span())
+  explicit symkey_span_t(const symkey_t& data)
+      : element(data.span())
   {
   }
 };
@@ -49,8 +51,8 @@ struct public_key_span_t
 struct private_key_span_t
 {
   array_to_const_span_t<private_key_t> element;
-  explicit private_key_span_t(const private_key_t& s)
-      : element(s.span())
+  explicit private_key_span_t(const private_key_t& data)
+      : element(data.span())
   {
   }
 };

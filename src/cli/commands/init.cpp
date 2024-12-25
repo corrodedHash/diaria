@@ -65,6 +65,7 @@ void setup_db(const key_repo_paths_t& keypath,
   if (symkeyfile.fail()) {
     throw std::runtime_error("Could not open symkeyfile");
   }
-  symkeyfile.write(make_signed_char(symkey.data()), symkey.size());
+  symkeyfile.write(make_signed_char(symkey.data()),
+                   static_cast<std::streamsize>(symkey.size()));
   std::print("Created key repository at {}\n", keypath.root.c_str());
 }

@@ -1,13 +1,12 @@
 
 #pragma once
 #include <filesystem>
-#include <string>
 #include <vector>
 
 #include "crypto/entry.hpp"
 #include "crypto/secret_key.hpp"
 
-auto read_password() -> std::string;
+auto read_password() -> safe_string;
 
 struct key_repo_paths_t
 {
@@ -23,7 +22,7 @@ struct entry_decryptor
   private_key_t private_key;
 
   [[nodiscard]] auto decrypt(std::span<const unsigned char> filebytes) const
-      -> std::vector<unsigned char>
+      -> safe_vector<unsigned char>
   {
     return ::decrypt(
         symkey_span_t {symkey}, private_key_span_t {private_key}, filebytes);

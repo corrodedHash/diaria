@@ -12,5 +12,6 @@ auto diaria_sodium_malloc(std::size_t size) -> void*
 }
 void diaria_sodium_free(void* pointer)
 {
-  return sodium_free(pointer);
+  sodium_free(pointer);
 }
+

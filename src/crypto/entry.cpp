@@ -44,7 +44,7 @@ auto symenc(symkey_span_t key, std::span<const unsigned char> plaintext)
 }
 
 auto symdec(symkey_span_t key, std::span<const unsigned char> ciphertext)
-    -> std::vector<unsigned char>
+    -> safe_vector<unsigned char>
 {
   auto nonce = std::ranges::subrange(
       ciphertext.begin(),
@@ -52,7 +52,7 @@ auto symdec(symkey_span_t key, std::span<const unsigned char> ciphertext)
   auto text = std::ranges::subrange(
       ciphertext.begin() + crypto_secretbox_xchacha20poly1305_NONCEBYTES,
       ciphertext.end());
-  auto plaintext = std::vector<unsigned char>(
+  safe_vector<unsigned char> plaintext(
       text.size() - crypto_secretbox_xchacha20poly1305_MACBYTES);
   if (crypto_secretbox_xchacha20poly1305_open_easy(plaintext.data(),
                                                    text.data(),
@@ -81,9 +81,9 @@ auto asymenc(public_key_span_t key, std::span<const unsigned char> plaintext)
 }
 
 auto asymdec(private_key_span_t key, std::span<const unsigned char> ciphertext)
-    -> std::vector<unsigned char>
+    -> safe_vector<unsigned char>
 {
-  std::vector<unsigned char> output(
+  safe_vector<unsigned char> output(
       ciphertext.size() - crypto_box_curve25519xchacha20poly1305_SEALBYTES, 0);
   public_key_t pubkey;
   crypto_scalarmult_base(pubkey.data(), key.element.data());
@@ -121,7 +121,7 @@ auto encrypt(symkey_span_t symkey,
 auto decrypt(symkey_span_t symkey,
              private_key_span_t private_key,
              std::span<const unsigned char> filebytes)
-    -> std::vector<unsigned char>
+    -> safe_vector<unsigned char>
 {
   if (!std::equal(magictag.begin(), magictag.end(), filebytes.begin())) {
     throw std::runtime_error("Decrypting file which is not a diaria entry");

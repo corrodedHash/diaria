@@ -40,18 +40,18 @@ auto get_iso_timestamp_utc() -> std::string
 }
 }  // namespace
 
-auto file_input_reader::get_plaintext() -> std::vector<unsigned char>
+auto file_input_reader::get_plaintext() -> safe_vector<unsigned char>
 {
   std::ifstream stream(input_file.p, std::ios::in | std::ios::binary);
   if (stream.fail()) {
     throw std::runtime_error("Could not open input file");
   }
-  std::vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
+  safe_vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
                                       std::istreambuf_iterator<char>());
   return contents;
 }
 
-auto editor_input_reader::get_plaintext() -> std::vector<unsigned char>
+auto editor_input_reader::get_plaintext() -> safe_vector<unsigned char>
 {
   return interactive_content_entry(cmdline, std::filesystem::path {"/tmp"});
   // return private_namespace_read(cmdline);

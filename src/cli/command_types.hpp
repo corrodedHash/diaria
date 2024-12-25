@@ -1,7 +1,6 @@
 #pragma once
 #include <filesystem>
 #include <memory>
-#include <string>
 #include <utility>
 
 #include "cli/key_management.hpp"
@@ -45,22 +44,22 @@ struct file_entry_encryptor_initializer : entry_encryptor_initializer
 
 struct password_provider
 {
-  virtual auto provide() -> std::string = 0;
+  virtual auto provide() -> safe_string = 0;
   virtual ~password_provider() = default;
 };
 
 struct stdin_password_provider : password_provider
 {
-  auto provide() -> std::string override;
+  auto provide() -> safe_string override;
 };
 struct stored_password_provider : password_provider
 {
-  std::string password;
-  explicit stored_password_provider(std::string in_password)
+  safe_string password;
+  explicit stored_password_provider(safe_string in_password)
       : password(std::move(in_password))
   {
   }
-  auto provide() -> std::string override;
+  auto provide() -> safe_string override;
 };
 struct file_password_provider : password_provider
 {
@@ -69,7 +68,7 @@ struct file_password_provider : password_provider
       : password_file(std::move(in_password_file))
   {
   }
-  auto provide() -> std::string override;
+  auto provide() -> safe_string override;
 };
 
 struct file_entry_decryptor_initializer : entry_decryptor_initializer

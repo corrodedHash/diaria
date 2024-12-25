@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <wordexp.h>
 
+#include "crypto/safe_buffer.hpp"
 #include "util/smart_fd.hpp"
 
 auto build_argv(std::string_view cmdline)
@@ -73,7 +74,7 @@ void exec_cmdline(std::string_view cmdline)
 
 auto interactive_content_entry(std::string_view cmdline,
                                const std::filesystem::path& temp_file_dir)
-    -> std::vector<unsigned char>
+    -> safe_vector<unsigned char>
 {
   auto temp_file_path = temp_file_dir / "diaria_XXXXXX";
   const auto child_pid = fork();
@@ -87,7 +88,7 @@ auto interactive_content_entry(std::string_view cmdline,
   waitpid(child_pid, &child_status, 0);
 
   std::ifstream stream(temp_file_path, std::ios::in | std::ios::binary);
-  std::vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
+  safe_vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
                                       std::istreambuf_iterator<char>());
   if (stream.fail()) {
     std::println(
@@ -160,10 +161,10 @@ void write_to_pipe(int pipe_fd, std::span<unsigned char> content)
   }
 }
 
-auto read_from_pipe(int pipe_fd) -> std::vector<unsigned char>
+auto read_from_pipe(int pipe_fd) -> safe_vector<unsigned char>
 {
-  std::array<unsigned char, 4096> buffer {};
-  std::vector<unsigned char> result {};
+  safe_array<unsigned char, 4096> buffer {};
+  safe_vector<unsigned char> result {};
   ssize_t bytes_read {};
 
   while ((bytes_read = read(pipe_fd, buffer.data(), buffer.size())) > 0) {
@@ -211,7 +212,7 @@ auto editor_in_private_namespace(void* arg_raw) -> int
 }
 
 auto private_namespace_read(std::string_view cmdline)
-    -> std::vector<unsigned char>
+    -> safe_vector<unsigned char>
 {
   std::array<int, 2> pipefd {};  // File descriptors for the pipe
 

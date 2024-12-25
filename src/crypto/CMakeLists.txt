@@ -6,6 +6,7 @@ add_library(
     entry.cpp
     compress.cpp
     safe_buffer.cpp
+    safe_allocator.cpp
 )
 
 target_include_directories(

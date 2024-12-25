@@ -1,9 +1,10 @@
 #include <cstdlib>
-#include <string>
 
 #include <unistd.h>
 
-auto read_password() -> std::string
+#include "crypto/secret_key.hpp"
+
+auto read_password() -> safe_string
 {
   return {getpass("Enter password: ")};
 }

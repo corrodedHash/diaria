@@ -1,5 +1,6 @@
 
 #include <cerrno>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -10,6 +11,8 @@
 #include <vector>
 
 #include <lzma.h>
+
+#include "crypto/safe_buffer.hpp"
 
 namespace
 {
@@ -87,12 +90,12 @@ auto init_encoder(lzma_stream* strm) -> bool
 
 // This function is identical to the one in 01_compress_easy.c.
 auto compress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
-    -> std::vector<unsigned char>
+    -> safe_vector<unsigned char>
 {
   const lzma_action action = LZMA_FINISH;
 
-  std::array<uint8_t, BUFSIZ> outbuf {};
-  std::vector<unsigned char> result {};
+  safe_array<unsigned char, BUFSIZ> outbuf {};
+  safe_vector<unsigned char> result {};
 
   strm->next_in = input.data();
   strm->avail_in = input.size();
@@ -103,9 +106,11 @@ auto compress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
     lzma_ret ret = lzma_code(strm, action);
 
     if (strm->avail_out == 0 || ret == LZMA_STREAM_END) {
-      const size_t write_size = sizeof(outbuf) - strm->avail_out;
+      const size_t write_size = outbuf.size() - strm->avail_out;
 
-      result.insert(result.end(), outbuf.begin(), outbuf.begin() + write_size);
+      result.insert(result.end(),
+                    outbuf.begin(),
+                    outbuf.begin() + static_cast<int64_t>(write_size));
 
       strm->next_out = outbuf.data();
       strm->avail_out = outbuf.size();
@@ -115,20 +120,6 @@ auto compress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
       return result;
     }
     if (ret != LZMA_OK) {
-      // const char* msg;
-      // switch (ret) {
-      //   case LZMA_MEM_ERROR:
-      //     msg = "Memory allocation failed";
-      //     break;
-
-      //   case LZMA_DATA_ERROR:
-      //     msg = "File size limits exceeded";
-      //     break;
-
-      //   default:
-      //     msg = "Unknown error, possibly a bug";
-      //     break;
-      // }
       std::println(stderr,
                    "Encoder error (error code {})",
                    static_cast<std::underlying_type_t<lzma_ret>>(ret));
@@ -137,22 +128,6 @@ auto compress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
   }
 }
 }  // namespace
-
-auto compress(std::span<const unsigned char> input)
-    -> std::vector<unsigned char>
-{
-  lzma_stream strm = LZMA_STREAM_INIT;
-
-  const bool success = init_encoder(&strm);
-  if (!success) {
-    throw std::runtime_error("Compressor initialization failed");
-  }
-  auto compressed = compress_lzma(&strm, input);
-
-  lzma_end(&strm);
-
-  return compressed;
-}
 
 namespace
 {
@@ -237,8 +212,85 @@ auto init_decoder(lzma_stream* strm) -> bool
 namespace
 {
 
+auto decompress_error(lzma_ret return_code)
+{
+  // It is important to check for LZMA_STREAM_END. Do not
+  // assume that getting ret != LZMA_OK would mean that
+  // everything has gone well or that when you aren't
+  // getting more output it must have successfully
+  // decoded everything.
+
+  // It's not LZMA_OK nor LZMA_STREAM_END,
+  // so it must be an error code. See lzma/base.h
+  // (src/liblzma/api/lzma/base.h in the source package
+  // or e.g. /usr/include/lzma/base.h depending on the
+  // install prefix) for the list and documentation of
+  // possible values. Many values listen in lzma_ret
+  // enumeration aren't possible in this example, but
+  // can be made possible by enabling memory usage limit
+  // or adding flags to the decoder initialization.
+  const char* msg {};
+  switch (return_code) {
+    case LZMA_MEM_ERROR:
+      msg = "Memory allocation failed";
+      break;
+
+    case LZMA_FORMAT_ERROR:
+      // .xz magic bytes weren't found.
+      msg = "The input is not in the .xz format";
+      break;
+
+    case LZMA_OPTIONS_ERROR:
+      // For example, the headers specify a filter
+      // that isn't supported by this liblzma
+      // version (or it hasn't been enabled when
+      // building liblzma, but no-one sane does
+      // that unless building liblzma for an
+      // embedded system). Upgrading to a newer
+      // liblzma might help.
+      //
+      // Note that it is unlikely that the file has
+      // accidentally became corrupt if you get this
+      // error. The integrity of the .xz headers is
+      // always verified with a CRC32, so
+      // unintentionally corrupt files can be
+      // distinguished from unsupported files.
+      msg = "Unsupported compression options";
+      break;
+
+    case LZMA_DATA_ERROR:
+      msg = "Compressed file is corrupt";
+      break;
+
+    case LZMA_BUF_ERROR:
+      // Typically this error means that a valid
+      // file has got truncated, but it might also
+      // be a damaged part in the file that makes
+      // the decoder think the file is truncated.
+      // If you prefer, you can use the same error
+      // message for this as for LZMA_DATA_ERROR.
+      msg =
+          "Compressed file is truncated or "
+          "otherwise corrupt";
+      break;
+
+    default:
+      // This is most likely LZMA_PROG_ERROR.
+      msg = "Unknown error, possibly a bug";
+      break;
+  }
+
+  throw std::runtime_error(
+      std::format("Could not decompress:\n"
+                  "Decoder error: "
+                  "{} (error code {})",
+                  msg,
+                  static_cast<std::underlying_type_t<lzma_ret>>(return_code)));
+}
+}  // namespace
+
 auto decompress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
-    -> std::vector<unsigned char>
+    -> safe_vector<unsigned char>
 {
   // When LZMA_CONCATENATED flag was used when initializing the decoder,
   // we need to tell lzma_code() when there will be no more input.
@@ -252,8 +304,8 @@ auto decompress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
   // case some unused data may be left in strm->next_in.
   const lzma_action action = LZMA_FINISH;
 
-  std::array<uint8_t, BUFSIZ> outbuf {};
-  std::vector<unsigned char> result {};
+  safe_array<unsigned char, BUFSIZ> outbuf {};
+  safe_vector<unsigned char> result {};
 
   strm->next_in = input.data();
   strm->avail_in = input.size();
@@ -264,9 +316,11 @@ auto decompress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
     lzma_ret ret = lzma_code(strm, action);
 
     if (strm->avail_out == 0 || ret == LZMA_STREAM_END) {
-      const size_t write_size = sizeof(outbuf) - strm->avail_out;
+      const size_t write_size = outbuf.size() - strm->avail_out;
 
-      result.insert(result.end(), outbuf.begin(), outbuf.begin() + write_size);
+      result.insert(result.end(),
+                    outbuf.begin(),
+                    outbuf.begin() + static_cast<int64_t>(write_size));
 
       strm->next_out = outbuf.data();
       strm->avail_out = outbuf.size();
@@ -278,94 +332,62 @@ auto decompress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
       return result;
     }
     if (ret != LZMA_OK) {
-      // It is important to check for LZMA_STREAM_END. Do not
-      // assume that getting ret != LZMA_OK would mean that
-      // everything has gone well or that when you aren't
-      // getting more output it must have successfully
-      // decoded everything.
-
-      // It's not LZMA_OK nor LZMA_STREAM_END,
-      // so it must be an error code. See lzma/base.h
-      // (src/liblzma/api/lzma/base.h in the source package
-      // or e.g. /usr/include/lzma/base.h depending on the
-      // install prefix) for the list and documentation of
-      // possible values. Many values listen in lzma_ret
-      // enumeration aren't possible in this example, but
-      // can be made possible by enabling memory usage limit
-      // or adding flags to the decoder initialization.
-      const char* msg {};
-      switch (ret) {
-        case LZMA_MEM_ERROR:
-          msg = "Memory allocation failed";
-          break;
-
-        case LZMA_FORMAT_ERROR:
-          // .xz magic bytes weren't found.
-          msg = "The input is not in the .xz format";
-          break;
-
-        case LZMA_OPTIONS_ERROR:
-          // For example, the headers specify a filter
-          // that isn't supported by this liblzma
-          // version (or it hasn't been enabled when
-          // building liblzma, but no-one sane does
-          // that unless building liblzma for an
-          // embedded system). Upgrading to a newer
-          // liblzma might help.
-          //
-          // Note that it is unlikely that the file has
-          // accidentally became corrupt if you get this
-          // error. The integrity of the .xz headers is
-          // always verified with a CRC32, so
-          // unintentionally corrupt files can be
-          // distinguished from unsupported files.
-          msg = "Unsupported compression options";
-          break;
-
-        case LZMA_DATA_ERROR:
-          msg = "Compressed file is corrupt";
-          break;
-
-        case LZMA_BUF_ERROR:
-          // Typically this error means that a valid
-          // file has got truncated, but it might also
-          // be a damaged part in the file that makes
-          // the decoder think the file is truncated.
-          // If you prefer, you can use the same error
-          // message for this as for LZMA_DATA_ERROR.
-          msg =
-              "Compressed file is truncated or "
-              "otherwise corrupt";
-          break;
-
-        default:
-          // This is most likely LZMA_PROG_ERROR.
-          msg = "Unknown error, possibly a bug";
-          break;
-      }
-
-      std::println(stderr,
-                   "Decoder error: "
-                   "{} (error code {})",
-                   msg,
-                   static_cast<std::underlying_type_t<lzma_ret>>(ret));
-      throw std::runtime_error("Could not decompress");
+      decompress_error(ret);
     }
   }
-}
 }  // namespace
 
-auto decompress(std::span<const unsigned char> input)
-    -> std::vector<unsigned char>
+struct owned_lzma_decode_stream
 {
-  lzma_stream strm = LZMA_STREAM_INIT;
-  if (!init_decoder(&strm)) {
-    // Decoder initialization failed. There's no point
-    // to retry it so we need to exit.
-    throw std::runtime_error("Could not initialize decoder");
+  lzma_stream strm {};
+  owned_lzma_decode_stream()
+  {
+    strm = LZMA_STREAM_INIT;
+    if (!init_decoder(&strm)) {
+      throw std::runtime_error("Could not initialize compression stream");
+    }
   }
+  owned_lzma_decode_stream(const owned_lzma_decode_stream&) = delete;
+  owned_lzma_decode_stream(owned_lzma_decode_stream&&) = delete;
+  auto operator=(const owned_lzma_decode_stream&) -> owned_lzma_decode_stream& =
+                                                         delete;
+  auto operator=(owned_lzma_decode_stream&&) -> owned_lzma_decode_stream& =
+                                                    delete;
+  ~owned_lzma_decode_stream() { lzma_end(&strm); }
+};
+struct owned_lzma_encode_stream
+{
+  lzma_stream strm {};
+  owned_lzma_encode_stream()
+  {
+    strm = LZMA_STREAM_INIT;
+    if (!init_encoder(&strm)) {
+      throw std::runtime_error("Could not initialize compression stream");
+    }
+  }
+  owned_lzma_encode_stream(const owned_lzma_encode_stream&) = delete;
+  owned_lzma_encode_stream(owned_lzma_encode_stream&&) = delete;
+  auto operator=(const owned_lzma_encode_stream&) -> owned_lzma_encode_stream& =
+                                                         delete;
+  auto operator=(owned_lzma_encode_stream&&) -> owned_lzma_encode_stream& =
+                                                    delete;
+  ~owned_lzma_encode_stream() { lzma_end(&strm); }
+};
 
-  auto result = decompress_lzma(&strm, input);
-  lzma_end(&strm);
+auto decompress(std::span<const unsigned char> input)
+    -> safe_vector<unsigned char>
+{
+  owned_lzma_decode_stream strm {};
+  auto result = decompress_lzma(&strm.strm, input);
   return result;
+}
+
+auto compress(std::span<const unsigned char> input)
+    -> safe_vector<unsigned char>
+{
+  owned_lzma_encode_stream strm {};
+
+  auto compressed = compress_lzma(&strm.strm, input);
+
+  return compressed;
 }
