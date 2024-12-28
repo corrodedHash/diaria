@@ -30,6 +30,12 @@
       "binaryDir": "build/tidy"
     },
     {
+      "name": "dev-cov-local",
+      "inherits": ["dev-cov", "local-base"],
+      "generator": "Ninja",
+      "binaryDir": "build/cov"
+    },
+    {
       "name": "dev-san-local",
       "inherits": ["dev-san", "local-base"],
       "generator": "Ninja",
