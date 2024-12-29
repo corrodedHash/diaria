@@ -35,6 +35,11 @@ struct RGB
   }
 };
 
+inline auto operator==(const RGB& lhs, const RGB& rhs) -> bool
+{
+  return lhs.red == rhs.red && lhs.green == rhs.green && lhs.blue == rhs.blue;
+}
+
 inline auto make_gradient(const RGB& color_a, const RGB& color_b, double factor)
 {
   assert(factor >= 0);
@@ -68,9 +73,10 @@ auto map_color_range(const std::ranges::forward_range auto& threshold_colors,
   if (higher_color == threshold_colors.end()) {
     return std::get<1>(*lower_color);
   }
-  const auto ratio = static_cast<double>(number - std::get<0>(*lower_color))
-      / static_cast<double>(std::get<0>(*higher_color)
-                            - std::get<0>(*lower_color));
+  auto const lower_thresh = std::get<0>(*lower_color);
+  auto const higher_thresh = std::get<0>(*higher_color);
+  const auto ratio = static_cast<double>(number - lower_thresh)
+      / static_cast<double>(higher_thresh - lower_thresh);
   return make_gradient(
       std::get<1>(*lower_color), std::get<1>(*higher_color), ratio);
 }
