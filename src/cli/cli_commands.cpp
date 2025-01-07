@@ -100,21 +100,25 @@ auto add::create_command(base& base_command) -> CLI::App_p
                    "space for the "
                    "temporary file which will be written.")
       ->default_str(cmdline);
+  subcom_add->add_flag("--no-sandbox",
+                       no_sandbox,
+                       "Disable mount namespace sandboxing of editor");
   const std::function<void()> add_callback = [&keyrepo = base_command.keyrepo,
                                               &repopath = base_command.repopath,
                                               &cmdline = cmdline,
+                                              &no_sandbox = no_sandbox,
                                               &input_path = input_path,
                                               &output_path = output_path]()
   {
     std::unique_ptr<input_reader> input;
     if (input_path) {
-      auto bla = file_input_reader {};
-      bla.input_file = *input_path;
-      input = std::make_unique<file_input_reader>(bla);
+      input = std::make_unique<file_input_reader>(*input_path);
     } else {
-      auto bla = editor_input_reader {};
-      bla.cmdline = cmdline;
-      input = std::make_unique<editor_input_reader>(bla);
+      if (no_sandbox) {
+        input = std::make_unique<editor_input_reader>(cmdline);
+      } else {
+        input = std::make_unique<sandbox_editor_input_reader>(cmdline);
+      }
     }
     std::unique_ptr<entry_writer> output;
     if (output_path) {

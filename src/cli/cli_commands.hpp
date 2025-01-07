@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
-#include "CLI11/CLI11.hpp"
 
+#include "CLI11/CLI11.hpp"
 #include "cli/command_types.hpp"
 #include "cli/key_management.hpp"
 namespace cli_commands
@@ -22,6 +22,7 @@ struct add
 {
   std::optional<input_file_t> input_path;
   std::optional<output_file_t> output_path;
+  bool no_sandbox {};
   std::string cmdline {"vim %"};
 
   [[nodiscard]] auto create_command(base& base_command) -> CLI::App_p;

@@ -14,7 +14,6 @@
 #include <span>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
 #include "./add_entry.hpp"
 
@@ -25,10 +24,10 @@
 #include <unistd.h>
 #include <wordexp.h>
 
-#include "util/char.hpp"
 #include "cli/command_types.hpp"
 #include "cli/editor.hpp"
 #include "cli/key_management.hpp"
+#include "util/char.hpp"
 
 namespace
 {
@@ -48,13 +47,21 @@ auto file_input_reader::get_plaintext() -> safe_vector<unsigned char>
   }
   safe_vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
                                       std::istreambuf_iterator<char>());
+
+  if (stream.fail()) {
+    throw std::runtime_error("Could not read input file");
+  }
   return contents;
 }
 
 auto editor_input_reader::get_plaintext() -> safe_vector<unsigned char>
 {
   return interactive_content_entry(cmdline, std::filesystem::path {"/tmp"});
-  // return private_namespace_read(cmdline);
+}
+
+auto sandbox_editor_input_reader::get_plaintext() -> safe_vector<unsigned char>
+{
+  return private_namespace_read(cmdline);
 }
 
 void file_entry_writer::write_to_file(const std::filesystem::path& filename,

@@ -87,6 +87,14 @@ auto interactive_content_entry(std::string_view cmdline,
   int child_status {};
   waitpid(child_pid, &child_status, 0);
 
+  if (child_status != 0) {
+    std::println(stderr,
+                 "Editor did not terminate successfully. Temporary entry still "
+                 "stored at {}",
+                 temp_file_path.c_str());
+    throw std::runtime_error("Executing editor");
+  }
+
   std::ifstream stream(temp_file_path, std::ios::in | std::ios::binary);
   safe_vector<unsigned char> contents((std::istreambuf_iterator<char>(stream)),
                                       std::istreambuf_iterator<char>());
@@ -95,7 +103,7 @@ auto interactive_content_entry(std::string_view cmdline,
         stderr,
         "Error reading diary file. Unencrypted entry is still stored at {}",
         temp_file_path.c_str());
-    throw std::runtime_error("Could not read diary entry file");
+    throw std::runtime_error("Reading temporary diary entry");
   }
   if (contents.empty()) {
     std::println(stderr,
@@ -124,20 +132,11 @@ void write_to_file(const std::filesystem::path& path, const std::string& data)
 
 void set_uid_map(uid_t uid, gid_t gid)
 {
-  // uid_t uid = getuid();
-  // gid_t gid = getgid();
-
   auto proc_path = std::filesystem::path {"/proc"} / "self";
 
-  auto setgroups_path = proc_path / "setgroups";
-
-  write_to_file(setgroups_path, "deny\n");
-
-  auto gid_map_path = proc_path / "gid_map";
-  write_to_file(gid_map_path, std::format("0 {} 1\n", gid));
-
-  auto uid_map_path = proc_path / "uid_map";
-  write_to_file(uid_map_path, std::format("0 {} 1\n", uid));
+  write_to_file(proc_path / "setgroups", "deny\n");
+  write_to_file(proc_path / "gid_map", std::format("0 {} 1\n", gid));
+  write_to_file(proc_path / "uid_map", std::format("0 {} 1\n", uid));
 }
 
 struct editor_args
@@ -148,7 +147,7 @@ struct editor_args
   int tx_fd;
 };
 
-void write_to_pipe(int pipe_fd, std::span<unsigned char> content)
+void write_all(int pipe_fd, std::span<unsigned char> content)
 {
   auto left_to_write = std::span(content);
   while (!left_to_write.empty()) {
@@ -161,7 +160,7 @@ void write_to_pipe(int pipe_fd, std::span<unsigned char> content)
   }
 }
 
-auto read_from_pipe(int pipe_fd) -> safe_vector<unsigned char>
+auto read_until_closed(int pipe_fd) -> safe_vector<unsigned char>
 {
   safe_array<unsigned char, 4096> buffer {};
   safe_vector<unsigned char> result {};
@@ -193,8 +192,11 @@ auto editor_in_private_namespace(void* arg_raw) -> int
     throw std::runtime_error("Could not create temporary directory for entry");
   }
 
-  // const std::string mount_args = "noswap";
-  if (mount("tmpfs", mount_dir.data(), "tmpfs", 0, nullptr) == -1) {
+  const std::string_view mount_args;
+  // TODO: This currently results in an invalid argument error from `mount tmpfs`
+  // Prevent tmpfs from swapping
+  // const std::string_view mount_args {"noswap"};
+  if (mount("tmpfs", mount_dir.data(), "tmpfs", 0, mount_args.data()) == -1) {
     throw std::runtime_error(std::format(
         "Could not mount tmpfs; Errno {} [{}]", errno, strerror(errno)));
   }
@@ -206,7 +208,7 @@ auto editor_in_private_namespace(void* arg_raw) -> int
     throw std::runtime_error("Could not unmount tmpfs");
   }
 
-  write_to_pipe(arg->tx_fd, content);
+  write_all(arg->tx_fd, content);
   close(arg->tx_fd);
   return 0;
 }
@@ -235,7 +237,7 @@ auto private_namespace_read(std::string_view cmdline)
   close(pipefd[1]);
 
   std::println("Waiting for content...");
-  auto content = read_from_pipe(pipefd[0]);
+  auto content = read_until_closed(pipefd[0]);
   std::println("Received content");
 
   // Wait for the child process to complete

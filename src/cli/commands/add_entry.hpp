@@ -1,5 +1,7 @@
 #pragma once
 #include <memory>
+#include <string_view>
+#include <utility>
 
 #include "cli/command_types.hpp"
 #include "crypto/safe_buffer.hpp"
@@ -12,6 +14,10 @@ struct input_reader
 
 struct file_input_reader final : input_reader
 {
+  explicit file_input_reader(input_file_t input_file)
+      : input_file(std::move(input_file))
+  {
+  }
   input_file_t input_file;
 
   auto get_plaintext() -> safe_vector<unsigned char> override;
@@ -19,6 +25,21 @@ struct file_input_reader final : input_reader
 
 struct editor_input_reader final : input_reader
 {
+  explicit editor_input_reader(std::string_view cmdline)
+      : cmdline(cmdline)
+  {
+  }
+  std::string_view cmdline;
+
+  auto get_plaintext() -> safe_vector<unsigned char> override;
+};
+
+struct sandbox_editor_input_reader final : input_reader
+{
+  explicit sandbox_editor_input_reader(std::string_view cmdline)
+      : cmdline(cmdline)
+  {
+  }
   std::string_view cmdline;
 
   auto get_plaintext() -> safe_vector<unsigned char> override;
