@@ -11,30 +11,31 @@ def repo_init_bare(p: Path):
 
 
 def repo_init_1(p: Path, bare_repo: Path):
-    subprocess.run("git -c init.defaultBranch=main init", check=True, shell=True, cwd=p)
-    subprocess.run('git config user.name "Testuser"', check=True, shell=True, cwd=p)
-    subprocess.run(
-        'git config user.email "testuser@llvm.org"', check=True, shell=True, cwd=p
-    )
-    subprocess.run(
-        f"git remote add origin {bare_repo.absolute()}", check=True, shell=True, cwd=p
-    )
-    subprocess.run("touch init.txt", check=True, shell=True, cwd=p)
-    subprocess.run("git add init.txt", check=True, shell=True, cwd=p)
-    subprocess.run('git commit -m "Init"', check=True, shell=True, cwd=p)
-    subprocess.run("git push -u origin main", check=True, shell=True, cwd=p)
+    commands = [
+        "git -c init.defaultBranch=main init",
+        'git config user.name "Testuser"',
+        'git config user.email "testuser@llvm.org"',
+        f"git remote add origin {bare_repo.absolute()}",
+        "touch init.txt",
+        "git add init.txt",
+        'git commit -m "Init"',
+        "git push -u origin main",
+    ]
+    for c in commands:
+        subprocess.run(c, check=True, shell=True, cwd=p)
 
 
 def repo_init_2(p: Path, bare_repo: Path):
-    subprocess.run("git -c init.defaultBranch=main init", check=True, shell=True, cwd=p)
-    subprocess.run('git config user.name "Testuser"', check=True, shell=True, cwd=p)
-    subprocess.run(
-        'git config user.email "testuser@llvm.org"', check=True, shell=True, cwd=p
-    )
-    subprocess.run(
-        f"git remote add origin {bare_repo.absolute()}", check=True, shell=True, cwd=p
-    )
-    subprocess.run("git pull --set-upstream origin main", check=True, shell=True, cwd=p)
+    commands = [
+        "git -c init.defaultBranch=main init",
+        'git config user.name "Testuser"',
+        'git config user.email "testuser@llvm.org"',
+        f"git remote add origin {bare_repo.absolute()}",
+        "git pull --set-upstream origin main",
+    ]
+    for c in commands:
+
+        subprocess.run(c, check=True, shell=True, cwd=p)
 
 
 def test_git_sync(diaria: Path, key_path: Path, tmp_path: Path):

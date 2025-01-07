@@ -14,8 +14,8 @@ struct input_reader
 
 struct file_input_reader final : input_reader
 {
-  explicit file_input_reader(input_file_t input_file)
-      : input_file(std::move(input_file))
+  explicit file_input_reader(input_file_t in_input_file)
+      : input_file(std::move(in_input_file))
   {
   }
   input_file_t input_file;
@@ -25,8 +25,8 @@ struct file_input_reader final : input_reader
 
 struct editor_input_reader final : input_reader
 {
-  explicit editor_input_reader(std::string_view cmdline)
-      : cmdline(cmdline)
+  explicit editor_input_reader(std::string_view in_cmdline)
+      : cmdline(in_cmdline)
   {
   }
   std::string_view cmdline;
@@ -36,8 +36,8 @@ struct editor_input_reader final : input_reader
 
 struct sandbox_editor_input_reader final : input_reader
 {
-  explicit sandbox_editor_input_reader(std::string_view cmdline)
-      : cmdline(cmdline)
+  explicit sandbox_editor_input_reader(std::string_view in_cmdline)
+      : cmdline(in_cmdline)
   {
   }
   std::string_view cmdline;

@@ -169,7 +169,7 @@ auto read_until_closed(int pipe_fd) -> safe_vector<unsigned char>
   while ((bytes_read = read(pipe_fd, buffer.data(), buffer.size())) > 0) {
     const auto bufferspan =
         std::span(buffer.begin(), static_cast<std::size_t>(bytes_read));
-    std::println("{} bytes read", bytes_read);
+    // std::println("{} bytes read", bytes_read);
     result.insert(result.end(), bufferspan.begin(), bufferspan.end());
   }
 
@@ -193,9 +193,9 @@ auto editor_in_private_namespace(void* arg_raw) -> int
   }
 
   const std::string_view mount_args;
-  // TODO: This currently results in an invalid argument error from `mount tmpfs`
-  // Prevent tmpfs from swapping
-  // const std::string_view mount_args {"noswap"};
+  // TODO: This currently results in an invalid argument error from `mount
+  // tmpfs` Prevent tmpfs from swapping const std::string_view mount_args
+  // {"noswap"};
   if (mount("tmpfs", mount_dir.data(), "tmpfs", 0, mount_args.data()) == -1) {
     throw std::runtime_error(std::format(
         "Could not mount tmpfs; Errno {} [{}]", errno, strerror(errno)));
@@ -236,9 +236,9 @@ auto private_namespace_read(std::string_view cmdline)
   }
   close(pipefd[1]);
 
-  std::println("Waiting for content...");
+  // std::println("Waiting for content...");
   auto content = read_until_closed(pipefd[0]);
-  std::println("Received content");
+  // std::println("Received content");
 
   // Wait for the child process to complete
   if (waitpid(pid, nullptr, 0) == -1) {
