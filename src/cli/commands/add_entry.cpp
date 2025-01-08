@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -102,6 +104,12 @@ void add_entry(std::unique_ptr<entry_encryptor_initializer> keys,
                std::unique_ptr<entry_writer> output)
 {
   const auto plaintext = input->get_plaintext();
+  if (plaintext.empty()
+      || std::ranges::all_of(plaintext, [](char c) { return std::isspace(c); }))
+  {
+    throw std::runtime_error(
+        "Plaintext is empty or only contains whitespace; discarding");
+  }
   const auto encrypted = keys->init().encrypt(plaintext);
   output->write_entry(encrypted);
 }

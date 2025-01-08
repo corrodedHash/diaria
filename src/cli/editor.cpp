@@ -105,12 +105,6 @@ auto interactive_content_entry(std::string_view cmdline,
         temp_file_path.c_str());
     throw std::runtime_error("Reading temporary diary entry");
   }
-  if (contents.empty()) {
-    std::println(stderr,
-                 "Diary entry empty, not saving. Temporary file remains at {}",
-                 temp_file_path.c_str());
-    throw std::runtime_error("Could not create diary entry file");
-  }
   unlink(temp_file_path.c_str());
   return contents;
 }
