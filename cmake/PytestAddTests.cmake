@@ -29,7 +29,7 @@ if(CMAKE_SCRIPT_MODE_FILE)
     # Macro to create individual tests with optional test properties.
     macro(create_test NAME IDENTIFIER)
         string(APPEND _content
-            "add_test(\"${NAME}\" \"${PYTEST_EXECUTABLE}\" \"${IDENTIFIER}\")\n"
+            "add_test([==[${NAME}]==] \"${PYTEST_EXECUTABLE}\" [==[${IDENTIFIER}]==])\n"
         )
 
         # Prepare the properties for the test, including the environment settings.
@@ -50,7 +50,7 @@ if(CMAKE_SCRIPT_MODE_FILE)
 
     # If tests are bundled together, create a single test group.
     if (BUNDLE_TESTS)
-        create_test("${TEST_GROUP_NAME}" "${WORKING_DIRECTORY}")
+        create_test("\${TEST_GROUP_NAME}" "\${WORKING_DIRECTORY}")
 
     else()
         # Set environment variables for collecting tests.
@@ -133,7 +133,7 @@ if(CMAKE_SCRIPT_MODE_FILE)
             set(test_case "${WORKING_DIRECTORY}/${line}")
 
             # Create the test for CTest.
-            create_test("${test_name}" "${test_case}")
+            create_test("\${test_name}" "\${test_case}")
         endforeach()
 
         # Warn if no tests were discovered.
