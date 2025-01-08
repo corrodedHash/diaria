@@ -3,18 +3,18 @@
 # tree and is not feasible from an install location
 
 
-# find_package(Catch2 3 REQUIRED)
+find_package(Catch2 3 REQUIRED)
 
-Include(FetchContent)
-
-FetchContent_Declare(
-  Catch2
-  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.8.0
-  GIT_SHALLOW    ON
-)
-
-FetchContent_MakeAvailable(Catch2)
+# Include(FetchContent)
+#
+# FetchContent_Declare(
+#   Catch2
+#   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+#   GIT_TAG        v3.8.0
+#   GIT_SHALLOW    ON
+# )
+#
+# FetchContent_MakeAvailable(Catch2)
 
 project(executableTests LANGUAGES CXX)
 
