@@ -17,17 +17,17 @@ struct StringMaker<RGB>
 
 TEST_CASE("RGB class")
 {
-  RGB a {99, 100, 101};
-  RGB red {255, 0, 0};
-  RGB green {0, 255, 0};
-  RGB blue {0, 0, 255};
+  constexpr RGB gray {99, 100, 101};
+  constexpr RGB red {255, 0, 0};
+  constexpr RGB green {0, 255, 0};
+  constexpr RGB blue {0, 0, 255};
   SECTION("constructing from hex value")
   {
-    REQUIRE(RGB::from_hex(0x636465) == a);
+    REQUIRE(RGB::from_hex(0x636465) == gray);
   }
   SECTION("reading a value")
   {
-    REQUIRE(a.red == 99);
+    REQUIRE(gray.red == 99);
   }
   SECTION("green is perceived brighter than blue")
   {
@@ -45,11 +45,11 @@ TEST_CASE("RGB class")
   }
 
   const std::array<std::pair<uint32_t, RGB>, 4> gradient_mapping = {
-      {{0, a}, {0, red}, {500, green}, {4000, blue}}};
+      {{0, gray}, {0, red}, {500, green}, {4000, blue}}};
 
   SECTION("mapping gradient thresholds")
   {
-    REQUIRE(map_color_range(gradient_mapping, 0) == a);
+    REQUIRE(map_color_range(gradient_mapping, 0) == gray);
     REQUIRE(map_color_range(gradient_mapping, 500) == green);
     REQUIRE(map_color_range(gradient_mapping, 4000) == blue);
     REQUIRE(map_color_range(gradient_mapping, 10000) == blue);
