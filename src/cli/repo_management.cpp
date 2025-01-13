@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <filesystem>
 #include <ranges>
 #include <spanstream>
 #include <vector>
@@ -20,6 +21,9 @@ auto parse_timestamp(std::string_view filename) -> std::optional<time_point>
 // Returns the diaria entries, sorted by their creation date
 auto list_entries(const repo_path_t& repo) -> std::vector<diaria_entry_path>
 {
+  if (!std::filesystem::exists(repo.repo)) {
+    return {};
+  }
   auto result =
       std::filesystem::directory_iterator(repo.repo)
       | std::views::filter([](const auto& entry)

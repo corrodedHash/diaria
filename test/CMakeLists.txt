@@ -23,6 +23,7 @@ add_executable(unit_tests
     src/entry_test.cpp
     src/private_key_test.cpp
     src/util_rgb.cpp
+    src/util_time.cpp
     )
 target_link_libraries(unit_tests PRIVATE Catch2::Catch2WithMain crypto_lib)
 target_compile_features(unit_tests PRIVATE cxx_std_23)

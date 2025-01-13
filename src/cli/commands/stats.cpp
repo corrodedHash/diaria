@@ -16,49 +16,16 @@
 
 #include "cli/repo_management.hpp"
 #include "util/rgb.hpp"
+#include "util/time.hpp"
 
 namespace
 {
-auto to_ymd(const std::chrono::utc_clock::time_point& input_time)
-{
-  return std::chrono::year_month_day {std::chrono::floor<std::chrono::days>(
-      std::chrono::system_clock::time_point((input_time.time_since_epoch())))};
-}
-
-auto calendar_week(const std::chrono::year_month_day& day) -> unsigned int
-{
-  constexpr int days_in_week = 7;
-  // Number of days in the first week of the year
-  const std::chrono::days second_week_delta {
-      days_in_week
-      - (std::chrono::weekday {std::chrono::January / 01 / day.year()}
-             .iso_encoding()
-         - 1)};
-  const std::chrono::year_month_day second_week_start {
-      std::chrono::January / static_cast<int>(1 + second_week_delta.count())
-      / day.year()};
-  if (second_week_start > day) {
-    return 0;
-  }
-  const std::chrono::days day_delta =
-      std::chrono::sys_days(day) - std::chrono::sys_days(second_week_start);
-  return static_cast<unsigned int>(day_delta.count() / days_in_week) + 1;
-}
-
-auto days_of_year(std::chrono::year year)
-{
-  return std::views::iota(0)
-      | std::views::transform(
-             [year](auto day_delta)
-             {
-               return std::chrono::sys_days {std::chrono::January / 01 / year}
-               + std::chrono::days {day_delta};
-             })
-      | std::views::take_while(
-             [year](auto day)
-             { return std::chrono::year_month_day {day}.year() == year; });
-}
-
+/**
+@param soft_max_day When no further days containing entries exist, cut entry
+generation off at this date
+@return A vector containing the file size of all entries made on each day within
+the year
+ */
 auto handle_year(const std::ranges::forward_range auto& entries,
                  std::chrono::year year,
                  std::optional<std::chrono::year_month_day> soft_max_day)
@@ -114,10 +81,8 @@ auto handle_year(const std::ranges::forward_range auto& entries,
 }
 
 auto print_year(std::span<const std::uint64_t> cells, std::chrono::year year)
+    -> std::string
 {
-  const auto skip_first_day_count =
-      (std::chrono::weekday {std::chrono::January / 01 / year}.iso_encoding()
-       - 1);
   constexpr RGB color_atlantis = RGB::from_hex(0x5ad52d);
 
   constexpr RGB color_titan_white = RGB::from_hex(0xe5e8ff);
@@ -135,34 +100,49 @@ auto print_year(std::span<const std::uint64_t> cells, std::chrono::year year)
        {4000, color_torea_bay},
        {12000, color_wild_strawberry}}};
 
+  const auto first_weekday =
+      (std::chrono::weekday {std::chrono::January / 01 / year}.iso_encoding()
+       - 1);
+
   constexpr int days_in_week = 7;
+  std::string result {};
+
+  const auto print_weekday_line = [&](auto weekday)
+  {
+    const auto days_until_weekday = (7 - first_weekday + weekday) % 7;
+    const auto lines =
+        cells | std::views::drop(days_until_weekday)
+        | std::views::stride(days_in_week)
+        | std::views::transform(
+            [&](const auto cell_byte_count)
+            {
+              const auto chosen_color =
+                  map_color_range(byte_gradient_mapping, cell_byte_count);
+              const auto foreground_color =
+                  chosen_color.luminance() < 140 ? color_white : color_black;
+              constexpr int bytes_per_kilobyte = 1000;
+              constexpr std::string_view ansi_clear_style {"\x1b[0m"};
+              return std::format("{}{}{:2}{} ",
+                                 chosen_color.ansi_24_back(),
+                                 foreground_color.ansi_24_fore(),
+                                 cell_byte_count / bytes_per_kilobyte,
+                                 ansi_clear_style);
+            });
+
+    return std::ranges::fold_left(lines, std::string(), std::plus {});
+  };
+
   for (unsigned int i = 0; i < days_in_week; ++i) {
-    if (skip_first_day_count > i) {
-      std::print("   ");
+    if (first_weekday > i) {
+      result += std::string(3, ' ');
     }
-    for (const auto cell_byte_count : cells
-             | std::views::drop((7 - skip_first_day_count + i) % 7)
-             | std::views::stride(7))
-    {
-      const auto chosen_color =
-          map_color_range(byte_gradient_mapping, cell_byte_count);
-      const auto foreground_color =
-          chosen_color.luminance() < 140 ? color_white : color_black;
-      const auto bytes_per_kilobyte = 1000;
-      std::print("\x1b[48;2;{};{};{}m\x1b[38;2;{};{};{}m{:2}\x1b[0m ",
-                 chosen_color.red,
-                 chosen_color.green,
-                 chosen_color.blue,
-                 foreground_color.red,
-                 foreground_color.green,
-                 foreground_color.blue,
-                 cell_byte_count / bytes_per_kilobyte);
-    }
-    std::println();
+    result += print_weekday_line(i);
+    result += '\n';
   }
+  return result;
 }
 
-auto print_year_header(std::chrono::year year)
+auto print_year_header(std::chrono::year year) -> std::string
 {
   constexpr std::array<std::string_view, 12> month_names = {"Jan",
                                                             "Feb",
@@ -177,26 +157,23 @@ auto print_year_header(std::chrono::year year)
                                                             "Nov",
                                                             "Dec"};
 
-  auto index = 0;
   constexpr unsigned int weekwidth = 3;
-  std::println("    {}", year);
   std::string line {};
-  for (const auto month : month_names) {
+  for (const auto [index, month] : std::views::enumerate(month_names)) {
     auto month_start = std::chrono::year_month_day {
         year,
-        std::chrono::month {static_cast<unsigned int>(index + 1)},
+        std::chrono::month {static_cast<unsigned int>((index + 1))},
         std::chrono::day {1}};
-    index += 1;
 
     const auto week = calendar_week(month_start);
-    const auto padding = week * weekwidth;
-    if (padding < line.length()) {
+    const auto output_width = week * weekwidth;
+    if (output_width < line.length()) {
       continue;
     }
-    line += std::string(padding - line.length(), ' ');
+    line += std::string(output_width - line.length(), ' ');
     line += month;
   }
-  std::println("{}", line);
+  return std::format("{}{}\n{}\n", std::string(4, ' '), year, line);
 }
 }  // namespace
 
@@ -225,7 +202,7 @@ void repo_stats(const repo_path_t& repo)
     }
     const auto year = to_ymd(entry_year.begin()->entry_time).year();
     const auto cells = handle_year(entry_year, year, std::optional(ymd4));
-    print_year_header(year);
-    print_year(cells, year);
+    std::print("{}", print_year_header(year));
+    std::print("{}", print_year(cells, year));
   }
 }

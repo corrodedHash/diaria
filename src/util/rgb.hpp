@@ -11,6 +11,16 @@
 // NOLINTNEXTLINE(readability-identifier-naming)
 struct RGB
 {
+private:
+  /**
+  Generate a part for an ANSI escape code using this RGB color
+  */
+  [[nodiscard]] auto ansi_24() const -> std::string
+  {
+    return std::format(";2;{};{};{}m", red, green, blue);
+  }
+
+public:
   unsigned char red {};
   unsigned char green {};
   unsigned char blue {};
@@ -18,11 +28,11 @@ struct RGB
   {
     constexpr uint32_t byte_bitmask = 0xff;
     constexpr uint32_t channel_width = 8;
-    return RGB {
-        static_cast<unsigned char>((hexcode >> (2 * (channel_width)))
-                                   & byte_bitmask),
-        static_cast<unsigned char>((hexcode >> channel_width) & byte_bitmask),
-        static_cast<unsigned char>(hexcode & byte_bitmask)};
+    return RGB {.red = static_cast<unsigned char>(
+                    (hexcode >> (2 * (channel_width))) & byte_bitmask),
+                .green = static_cast<unsigned char>((hexcode >> channel_width)
+                                                    & byte_bitmask),
+                .blue = static_cast<unsigned char>(hexcode & byte_bitmask)};
   }
   [[nodiscard]] auto luminance() const -> double
   {
@@ -32,6 +42,20 @@ struct RGB
     return (0.2126 * red + 0.7152 * green + 0.0722 * blue);
     // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,
     // readability-magic-numbers)
+  }
+
+  /**
+  @return escape code to color background in the terminal*/
+  [[nodiscard]] auto ansi_24_fore() const -> std::string
+  {
+    return std::format("\x1b[38{}", ansi_24());
+  }
+
+  /**
+  @return escape code to color text in the terminal*/
+  [[nodiscard]] auto ansi_24_back() const -> std::string
+  {
+    return std::format("\x1b[48{}", ansi_24());
   }
 };
 
