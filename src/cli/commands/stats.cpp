@@ -1,9 +1,9 @@
 #include <cassert>
 #include <chrono>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <print>
 #include <ranges>
 #include <span>
@@ -17,6 +17,8 @@
 #include "cli/repo_management.hpp"
 #include "util/rgb.hpp"
 
+namespace
+{
 auto to_ymd(const std::chrono::utc_clock::time_point& input_time)
 {
   return std::chrono::year_month_day {std::chrono::floor<std::chrono::days>(
@@ -58,43 +60,60 @@ auto days_of_year(std::chrono::year year)
 }
 
 auto handle_year(const std::ranges::forward_range auto& entries,
-                 std::chrono::year year) -> std::vector<std::uint32_t>
+                 std::chrono::year year,
+                 std::optional<std::chrono::year_month_day> soft_max_day)
+    -> std::vector<std::uint64_t>
 {
-  auto day_entry_chunks =
-      entries
+  auto day_entry_chunks = entries
       | std::views::chunk_by(
-          [](auto last_entry, auto this_entry)
-          { return to_ymd(last_entry.first) == to_ymd(this_entry.first); });
+                              [](const diaria_entry_path& last_entry,
+                                 const diaria_entry_path& this_entry)
+                              {
+                                return to_ymd(last_entry.entry_time)
+                                    == to_ymd(this_entry.entry_time);
+                              });
   auto current_day_entry_chunk = day_entry_chunks.begin();
+  auto current_day_entry_chunk_end = day_entry_chunks.end();
 
-  constexpr std::size_t days_in_year = 366;
-  std::vector<std::uint32_t> cells {};
-  cells.reserve(days_in_year);
+  const auto cells =
+      days_of_year(year)
+      | std::views::transform([](const auto& day)
+                              { return std::chrono::year_month_day {day}; })
+      | std::views::take_while(
+          [&soft_max_day,
+           &current_day_entry_chunk,
+           &current_day_entry_chunk_end](const auto& day)
+          {
+            return !soft_max_day.has_value()
+                || (current_day_entry_chunk != current_day_entry_chunk_end
+                    || day < soft_max_day.value());
+          })
+      | std::views::transform(
+          [&current_day_entry_chunk,
+           &current_day_entry_chunk_end](const auto& current_day)
+          {
+            if (current_day_entry_chunk == current_day_entry_chunk_end
+                || to_ymd((*current_day_entry_chunk).begin()->entry_time)
+                    != current_day)
+            {
+              return 0UL;
+            }
 
-  for (auto const current_day : days_of_year(year)) {
-    if (current_day_entry_chunk == day_entry_chunks.end()
-        || to_ymd((*current_day_entry_chunk).begin()->first)
-            != std::chrono::year_month_day {current_day})
-    {
-      cells.push_back(0);
-    } else {
-      auto current_day_entry_sizes = *current_day_entry_chunk
-          | std::views::transform(
-              [](auto& entry)
-              {
-                return static_cast<std::uint32_t>(
-                    std::filesystem::file_size(entry.second));
-              });
+            auto current_day_entry_sizes = *current_day_entry_chunk
+                | std::views::transform(
+                    [](const auto& entry)
+                    { return (std::filesystem::file_size(entry.entry_path)); });
+            const auto size_sum = std::ranges::fold_left(
+                current_day_entry_sizes, 0, std::plus {});
 
-      cells.push_back(
-          std::ranges::fold_left(current_day_entry_sizes, 0, std::plus {}));
-      ++current_day_entry_chunk;
-    }
-  }
+            ++current_day_entry_chunk;
+            return size_sum;
+          })
+      | std::ranges::to<std::vector>();
   return cells;
 }
 
-auto print_year(std::span<const std::uint32_t> cells, std::chrono::year year)
+auto print_year(std::span<const std::uint64_t> cells, std::chrono::year year)
 {
   const auto skip_first_day_count =
       (std::chrono::weekday {std::chrono::January / 01 / year}.iso_encoding()
@@ -179,6 +198,7 @@ auto print_year_header(std::chrono::year year)
   }
   std::println("{}", line);
 }
+}  // namespace
 
 void repo_stats(const repo_path_t& repo)
 {
@@ -187,20 +207,24 @@ void repo_stats(const repo_path_t& repo)
     std::println("No entries");
     return;
   }
-  auto entries_by_year =
-      entries
+  auto entries_by_year = entries
       | std::views::chunk_by(
-          [](const auto& last_entry, const auto& current_entry)
-          {
-            return to_ymd(last_entry.first).year()
-                == to_ymd(current_entry.first).year();
-          });
+                             [](const diaria_entry_path& last_entry,
+                                const diaria_entry_path& current_entry)
+                             {
+                               return to_ymd(last_entry.entry_time).year()
+                                   == to_ymd(current_entry.entry_time).year();
+                             });
+  const auto now = std::chrono::system_clock::now();
+  const auto ymd4 =
+      std::chrono::year_month_day(std::chrono::floor<std::chrono::days>(now));
+  // TODO: Will have weird behavior if entries are from future years
   for (auto const entry_year : entries_by_year) {
     if (entry_year.empty()) {
       continue;
     }
-    const auto year = to_ymd(entry_year.begin()->first).year();
-    const auto cells = handle_year(entry_year, year);
+    const auto year = to_ymd(entry_year.begin()->entry_time).year();
+    const auto cells = handle_year(entry_year, year, std::optional(ymd4));
     print_year_header(year);
     print_year(cells, year);
   }

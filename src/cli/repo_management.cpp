@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <ranges>
 #include <spanstream>
+#include <vector>
 
 #include "repo_management.hpp"
 
@@ -17,14 +18,14 @@ auto parse_timestamp(std::string_view filename) -> std::optional<time_point>
 }
 
 // Returns the diaria entries, sorted by their creation date
-auto list_entries(const repo_path_t& repo)
-    -> std::vector<std::pair<time_point, std::filesystem::path>>
+auto list_entries(const repo_path_t& repo) -> std::vector<diaria_entry_path>
 {
   auto result =
       std::filesystem::directory_iterator(repo.repo)
-      | std::views::filter([](auto entry) { return entry.is_regular_file(); })
+      | std::views::filter([](const auto& entry)
+                           { return entry.is_regular_file(); })
       | std::views::filter(
-          [](auto entry)
+          [](const auto& entry)
           { return entry.path().filename().string().ends_with(".diaria"); })
       | std::views::transform(
           [](const auto& entry)
@@ -37,8 +38,11 @@ auto list_entries(const repo_path_t& repo)
                            { return entry.first.has_value(); })
       | std::views::transform(
           [](auto&& entry)
-          { return std::make_pair(entry.first.value(), entry.second); })
+          { return diaria_entry_path {entry.first.value(), entry.second}; })
       | std::ranges::to<std::vector>();
-  std::ranges::sort(result, {}, [](const auto& entry) { return entry.first; });
+  std::ranges::sort(result,
+                    {},
+                    [](const diaria_entry_path& entry)
+                    { return entry.entry_time; });
   return result;
 }

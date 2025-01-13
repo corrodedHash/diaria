@@ -20,13 +20,15 @@
 #include "cli/key_management.hpp"
 #include "cli/repo_management.hpp"
 
+namespace
+{
 // TODO: This is an N*m approach over a sorted list
 // This is a place to optimize, but only once we are managing a billion entries
 template<std::ranges::forward_range DatePairs, std::ranges::forward_range Dates>
   requires std::is_same_v<typename std::ranges::range_value_t<DatePairs>,
                           std::pair<time_point, time_point>>
-auto find_indices_within_ranges(const DatePairs& ranges,
-                                const Dates& dates) -> std::vector<std::size_t>
+auto find_indices_within_ranges(const DatePairs& ranges, const Dates& dates)
+    -> std::vector<std::size_t>
 {
   std::vector<std::size_t> indices;
 
@@ -45,8 +47,7 @@ auto find_indices_within_ranges(const DatePairs& ranges,
   return indices;
 }
 
-auto build_relevant_entry_list(
-    const std::vector<std::pair<time_point, std::filesystem::path>>& list)
+auto build_relevant_entry_list(const std::vector<diaria_entry_path>& list)
 {
   const auto half_day = std::chrono::hours(12);
   const auto ranges_delta =
@@ -71,8 +72,8 @@ auto build_relevant_entry_list(
                                   timepoint_now - distance + delta);
           });
   const auto dates = list
-      | std::ranges::views::transform([](const auto& entry)
-                                      { return entry.first; });
+      | std::ranges::views::transform([](const diaria_entry_path& entry)
+                                      { return entry.entry_time; });
   auto relevant_entry_indices = find_indices_within_ranges(ranges, dates);
   auto relevant_entries = std::ranges::reverse_view {relevant_entry_indices}
       | std::ranges::views::transform([&list](const auto& index)
@@ -85,7 +86,7 @@ void print_entries(entry_decryptor decryptor,
                    bool paging)
 {
   for (const auto& entry : relevant_entries) {
-    std::ifstream stream(entry.second, std::ios::in | std::ios::binary);
+    std::ifstream stream(entry.entry_path, std::ios::in | std::ios::binary);
     if (stream.fail()) {
       throw std::runtime_error("Could not open entry file");
     }
@@ -100,7 +101,7 @@ void print_entries(entry_decryptor decryptor,
           "\x1b"
           "c");
     }
-    std::println("Reading entry from {:%F %H:%M}", entry.first);
+    std::println("Reading entry from {:%F %H:%M}", entry.entry_time);
     std::println("{}", decrypted_decoded);
     std::println();
     if (paging) {
@@ -115,6 +116,7 @@ void print_entries(entry_decryptor decryptor,
     }
   }
 }
+}  // namespace
 
 void summarize_repo(std::unique_ptr<entry_decryptor_initializer> keys,
                     const repo_path_t& repo,
@@ -125,8 +127,8 @@ void summarize_repo(std::unique_ptr<entry_decryptor_initializer> keys,
   std::println("Relevant entries: {}", relevant_entries.size());
 
   for (const auto& entry : relevant_entries) {
-    const auto bytecount = std::filesystem::file_size(entry.second);
-    std::println("\t{:%F %H:%M} - {: 5} bytes", entry.first, bytecount);
+    const auto bytecount = std::filesystem::file_size(entry.entry_path);
+    std::println("\t{:%F %H:%M} - {: 5} bytes", entry.entry_time, bytecount);
   }
   if (paging) {
     std::println("Press [Enter] to start");
