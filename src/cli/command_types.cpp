@@ -27,7 +27,7 @@ auto file_entry_encryptor_initializer::init() -> entry_encryptor
 {
   auto symkey = load_file<symkey_t>(paths.get_symkey_path());
   auto public_key = load_file<public_key_t>(paths.get_pubkey_path());
-  return {std::move(symkey), public_key};
+  return {.symkey = std::move(symkey), .public_key = public_key};
 }
 
 auto stored_password_provider::provide() -> safe_string
@@ -57,5 +57,5 @@ auto file_entry_decryptor_initializer::init() -> entry_decryptor
       paths.get_private_key_path());
   const stored_secret_key pkey(private_key_raw);
   auto private_key = pkey.extract_key(pp->provide());
-  return {std::move(symkey), std::move(private_key)};
+  return {.symkey = std::move(symkey), .private_key = std::move(private_key)};
 }

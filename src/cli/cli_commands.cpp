@@ -35,7 +35,7 @@ base::base()
   app->add_option("-e,--entries",
                   [&repopath = repopath](auto paths)
                   {
-                    const auto read_path = paths.at(0);
+                    const auto& read_path = paths.at(0);
                     repopath = repo_path_t(read_path);
                     return true;
                   })
@@ -44,7 +44,7 @@ base::base()
   app->add_option("-k,--keys",
                   [&keyrepo = keyrepo](auto paths)
                   {
-                    const auto read_path = paths.at(0);
+                    const auto& read_path = paths.at(0);
                     keyrepo.root = read_path;
                     return true;
                   })
@@ -54,7 +54,7 @@ base::base()
          "-p,--password",
          [&password = password](auto paths)
          {
-           const auto read_password = paths.at(0);
+           const auto& read_password = paths.at(0);
            password = std::make_unique<stored_password_provider>(read_password);
            return true;
          })
@@ -62,7 +62,7 @@ base::base()
   app->add_option("--password_file",
                   [&password = password](auto paths)
                   {
-                    const auto read_password = paths.at(0);
+                    const auto& read_password = paths.at(0);
                     password =
                         std::make_unique<file_password_provider>(read_password);
                     return true;
@@ -106,7 +106,7 @@ auto add::create_command(base& base_command) -> CLI::App_p
   const std::function<void()> add_callback = [&keyrepo = base_command.keyrepo,
                                               &repopath = base_command.repopath,
                                               &cmdline = cmdline,
-                                              &no_sandbox = no_sandbox,
+                                              no_sandbox = no_sandbox,
                                               &input_path = input_path,
                                               &output_path = output_path]()
   {

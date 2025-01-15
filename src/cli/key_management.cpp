@@ -1,8 +1,8 @@
 #include <cstdlib>
 
-#include <unistd.h>
+#include "./key_management.hpp"
 
-#include "crypto/secret_key.hpp"
+#include <unistd.h>
 
 auto read_password() -> safe_string
 {

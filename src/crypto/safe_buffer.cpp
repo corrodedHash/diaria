@@ -14,4 +14,3 @@ void diaria_sodium_free(void* pointer)
 {
   sodium_free(pointer);
 }
-

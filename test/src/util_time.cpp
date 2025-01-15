@@ -27,8 +27,8 @@ TEST_CASE("Time utilities")
   SECTION("known time point")
 
   {
-    std::chrono::seconds utc_duration {1736782535};
-    std::chrono::utc_clock::time_point known_date {utc_duration};
+    std::chrono::seconds const utc_duration {1736782535};
+    std::chrono::utc_clock::time_point const known_date {utc_duration};
     REQUIRE(to_ymd(known_date) == std::chrono::January / 13 / 2025);
   }
 }

@@ -77,9 +77,7 @@ def test_git_sync(diaria: Path, key_path: Path, tmp_path: Path):
     subprocess.run([*diaria_cmd_base, "--entries", entry_1_path.absolute(), "sync"])
     subprocess.run([*diaria_cmd_base, "--entries", entry_2_path.absolute(), "sync"])
 
-    synced_entry_file = [x for x in entry_2_path.iterdir() if x.suffix == (".diaria")][
-        0
-    ]
+    [synced_entry_file] = [x for x in entry_2_path.iterdir() if x.suffix == (".diaria")]
     read_output = subprocess.run(
         [
             *diaria_cmd_base,

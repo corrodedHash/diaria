@@ -11,9 +11,9 @@
 #include <pwd.h>
 #include <unistd.h>
 
-#include "cli_commands.hpp"
 #include "cli/command_types.hpp"
 #include "cli/commands.hpp"
+#include "cli_commands.hpp"
 
 auto main(int argc, char** argv) -> int
 {

@@ -12,7 +12,8 @@ inline auto to_ymd(const std::chrono::utc_clock::time_point& input_time)
 /**
   Get the zero-indexed calendar week of the year which contains the given day
  */
-inline auto calendar_week(const std::chrono::year_month_day& day) -> unsigned int
+inline auto calendar_week(const std::chrono::year_month_day& day)
+    -> unsigned int
 {
   constexpr int days_in_week = 7;
   // Number of days in the first week of the year

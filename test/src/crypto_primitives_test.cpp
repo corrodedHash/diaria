@@ -31,7 +31,7 @@ TEST_CASE("Small compression and decompression")
   constexpr std::array<unsigned char, 6> input = {
       0xAC, 0X1D, 0XDE, 0XAD, 0XBE, 0XEF};
   std::remove_cv_t<decltype(input)> copied_input {};
-  std::copy(input.cbegin(), input.cend(), copied_input.begin());
+  std::ranges::copy(input, copied_input.begin());
 
   auto compressed = compress(copied_input);
   auto decompressed = decompress(compressed);
@@ -47,7 +47,7 @@ TEST_CASE("Large compression and decompression")
   REQUIRE(input[100] == 100);
 
   decltype(input) copied_input {};
-  std::copy(input.begin(), input.end(), std::back_inserter(copied_input));
+  std::ranges::copy(input, std::back_inserter(copied_input));
 
   auto compressed = compress(copied_input);
   auto decompressed = decompress(compressed);

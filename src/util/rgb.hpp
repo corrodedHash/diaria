@@ -75,7 +75,7 @@ inline auto make_gradient(const RGB& color_a, const RGB& color_b, double factor)
   const auto blue =
       static_cast<unsigned char>(std::lerp(color_a.blue, color_b.blue, factor));
 
-  return RGB {red, green, blue};
+  return RGB {.red = red, .green = green, .blue = blue};
 }
 
 template<typename T>

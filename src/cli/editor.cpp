@@ -31,11 +31,13 @@
 #include "crypto/safe_buffer.hpp"
 #include "util/smart_fd.hpp"
 
-auto build_argv(std::string_view cmdline)
+namespace
+{
+auto build_argv(const std::string& cmdline)
 {
   wordexp_t words {};
   // NOLINTNEXTLINE(hicpp-signed-bitwise)
-  wordexp(cmdline.data(), &words, WRDE_NOCMD | WRDE_UNDEF | WRDE_SHOWERR);
+  wordexp(cmdline.c_str(), &words, WRDE_NOCMD | WRDE_UNDEF | WRDE_SHOWERR);
 
   const auto word_span = std::span(words.we_wordv, words.we_wordc);
   const auto owned_word_span = word_span
@@ -61,7 +63,7 @@ void replace_first(std::string& input_string,
 
 void exec_cmdline(std::string_view cmdline)
 {
-  const auto words = build_argv(cmdline);
+  const auto words = build_argv(std::string(cmdline));
   const auto word_pointers = words
       | std::views::transform([](auto& word)
                               { return const_cast<char*>(word.data()); });
@@ -71,6 +73,7 @@ void exec_cmdline(std::string_view cmdline)
   const auto exec_result = execvp(argv[0], argv.data());
   throw std::runtime_error(std::format("Error during exec: {}", exec_result));
 }
+}  // namespace
 
 auto interactive_content_entry(std::string_view cmdline,
                                const std::filesystem::path& temp_file_dir)
@@ -109,6 +112,15 @@ auto interactive_content_entry(std::string_view cmdline,
   return contents;
 }
 
+struct editor_args
+{
+  std::string_view cmdline;
+  uid_t parent_uid;
+  gid_t parent_gid;
+  int tx_fd;
+};
+namespace
+{
 void write_to_file(const std::filesystem::path& path, const std::string& data)
 {
   const smart_fd file_descriptor {
@@ -132,14 +144,6 @@ void set_uid_map(uid_t uid, gid_t gid)
   write_to_file(proc_path / "gid_map", std::format("0 {} 1\n", gid));
   write_to_file(proc_path / "uid_map", std::format("0 {} 1\n", uid));
 }
-
-struct editor_args
-{
-  std::string_view cmdline;
-  uid_t parent_uid;
-  gid_t parent_gid;
-  int tx_fd;
-};
 
 void write_all(int pipe_fd, std::span<unsigned char> content)
 {
@@ -178,7 +182,7 @@ auto editor_in_private_namespace(void* arg_raw) -> int
   auto* arg = static_cast<editor_args*>(arg_raw);
   set_uid_map(arg->parent_uid, arg->parent_gid);
 
-  constexpr std::string_view mount_dir {"/tmp/diaria"};
+  static constexpr std::string mount_dir {"/tmp/diaria"};
 
   std::error_code mkdir_err {};
   std::filesystem::create_directory(mount_dir, mkdir_err);
@@ -190,7 +194,7 @@ auto editor_in_private_namespace(void* arg_raw) -> int
   // TODO: This currently results in an invalid argument error from `mount
   // tmpfs` Prevent tmpfs from swapping const std::string_view mount_args
   // {"noswap"};
-  if (mount("tmpfs", mount_dir.data(), "tmpfs", 0, mount_args.data()) == -1) {
+  if (mount("tmpfs", mount_dir.c_str(), "tmpfs", 0, mount_args.data()) == -1) {
     throw std::runtime_error(std::format(
         "Could not mount tmpfs; Errno {} [{}]", errno, strerror(errno)));
   }
@@ -198,7 +202,7 @@ auto editor_in_private_namespace(void* arg_raw) -> int
   auto content = interactive_content_entry(arg->cmdline, mount_dir);
 
   // Unmount the tmpfs
-  if (umount(mount_dir.data()) == -1) {
+  if (umount(mount_dir.c_str()) == -1) {
     throw std::runtime_error("Could not unmount tmpfs");
   }
 
@@ -206,7 +210,7 @@ auto editor_in_private_namespace(void* arg_raw) -> int
   close(arg->tx_fd);
   return 0;
 }
-
+}  // namespace
 auto private_namespace_read(std::string_view cmdline)
     -> safe_vector<unsigned char>
 {
@@ -220,7 +224,10 @@ auto private_namespace_read(std::string_view cmdline)
   auto stack = std::make_unique<std::array<char, stack_size>>();
   char* stack_top = stack->data() + stack->size();
 
-  editor_args args {cmdline, getuid(), getgid(), pipefd[1]};
+  editor_args args {.cmdline = cmdline,
+                    .parent_uid = getuid(),
+                    .parent_gid = getgid(),
+                    .tx_fd = pipefd[1]};
   pid_t const pid = clone(editor_in_private_namespace,
                           stack_top,
                           CLONE_NEWNS | CLONE_NEWUSER | SIGCHLD,

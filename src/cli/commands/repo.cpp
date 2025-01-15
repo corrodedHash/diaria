@@ -14,8 +14,8 @@
 
 #include <sodium.h>
 
-#include "util/char.hpp"
 #include "cli/command_types.hpp"
+#include "util/char.hpp"
 
 namespace views = std::ranges::views;
 
@@ -28,9 +28,11 @@ void dump_repo(std::unique_ptr<entry_decryptor_initializer> keys,
 
   for (const auto& entry :
        std::filesystem::directory_iterator(repo.repo)
-           | views::filter([](auto entry) { return entry.is_regular_file(); })
+           | views::filter([](const auto& entry)
+                           { return entry.is_regular_file(); })
            | views::filter(
-               [](auto entry) {
+               [](const auto& entry)
+               {
                  return entry.path().filename().string().ends_with(".diaria");
                }))
   {
@@ -64,7 +66,8 @@ void load_repo(std::unique_ptr<entry_encryptor_initializer> keys,
   std::filesystem::create_directories(repo.repo);
 
   for (const auto& entry : std::filesystem::directory_iterator(source)
-           | views::filter([](auto entry) { return entry.is_regular_file(); }))
+           | views::filter([](const auto& entry)
+                           { return entry.is_regular_file(); }))
   {
     std::ifstream stream(entry.path(), std::ios::in | std::ios::binary);
     if (stream.fail()) {
@@ -89,6 +92,8 @@ void load_repo(std::unique_ptr<entry_encryptor_initializer> keys,
   }
 }
 
+namespace
+{
 void sync_repo_git(const repo_path_t& repo)
 {
   auto workingdir = std::filesystem::current_path();
@@ -103,7 +108,7 @@ void sync_repo_git(const repo_path_t& repo)
   // NOLINTEND(cert-env33-c)
   std::filesystem::current_path(workingdir);
 }
-
+}  // namespace
 void sync_repo(const repo_path_t& repo)
 {
   if (!std::filesystem::exists(repo.repo)) {

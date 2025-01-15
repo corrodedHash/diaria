@@ -10,6 +10,8 @@
 #include <type_traits>
 #include <vector>
 
+#include "./compress.hpp"
+
 #include <lzma.h>
 
 #include "crypto/safe_buffer.hpp"
@@ -127,10 +129,7 @@ auto compress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
     }
   }
 }
-}  // namespace
 
-namespace
-{
 auto init_decoder(lzma_stream* strm) -> bool
 {
   // Initialize a .xz decoder. The decoder supports a memory usage limit
@@ -207,10 +206,6 @@ auto init_decoder(lzma_stream* strm) -> bool
                static_cast<std::underlying_type_t<lzma_ret>>(ret));
   return false;
 }
-}  // namespace
-
-namespace
-{
 
 auto decompress_error(lzma_ret return_code)
 {
@@ -287,7 +282,6 @@ auto decompress_error(lzma_ret return_code)
                   msg,
                   static_cast<std::underlying_type_t<lzma_ret>>(return_code)));
 }
-}  // namespace
 
 auto decompress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
     -> safe_vector<unsigned char>
@@ -313,7 +307,7 @@ auto decompress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
   strm->avail_out = outbuf.size();
 
   while (true) {
-    lzma_ret ret = lzma_code(strm, action);
+    lzma_ret const ret = lzma_code(strm, action);
 
     if (strm->avail_out == 0 || ret == LZMA_STREAM_END) {
       const size_t write_size = outbuf.size() - strm->avail_out;
@@ -335,6 +329,7 @@ auto decompress_lzma(lzma_stream* strm, std::span<const unsigned char> input)
       decompress_error(ret);
     }
   }
+}
 }  // namespace
 
 struct owned_lzma_decode_stream
@@ -349,10 +344,10 @@ struct owned_lzma_decode_stream
   }
   owned_lzma_decode_stream(const owned_lzma_decode_stream&) = delete;
   owned_lzma_decode_stream(owned_lzma_decode_stream&&) = delete;
-  auto operator=(const owned_lzma_decode_stream&) -> owned_lzma_decode_stream& =
-                                                         delete;
-  auto operator=(owned_lzma_decode_stream&&) -> owned_lzma_decode_stream& =
-                                                    delete;
+  auto operator=(const owned_lzma_decode_stream&)
+      -> owned_lzma_decode_stream& = delete;
+  auto operator=(owned_lzma_decode_stream&&)
+      -> owned_lzma_decode_stream& = delete;
   ~owned_lzma_decode_stream() { lzma_end(&strm); }
 };
 struct owned_lzma_encode_stream
@@ -367,10 +362,10 @@ struct owned_lzma_encode_stream
   }
   owned_lzma_encode_stream(const owned_lzma_encode_stream&) = delete;
   owned_lzma_encode_stream(owned_lzma_encode_stream&&) = delete;
-  auto operator=(const owned_lzma_encode_stream&) -> owned_lzma_encode_stream& =
-                                                         delete;
-  auto operator=(owned_lzma_encode_stream&&) -> owned_lzma_encode_stream& =
-                                                    delete;
+  auto operator=(const owned_lzma_encode_stream&)
+      -> owned_lzma_encode_stream& = delete;
+  auto operator=(owned_lzma_encode_stream&&)
+      -> owned_lzma_encode_stream& = delete;
   ~owned_lzma_encode_stream() { lzma_end(&strm); }
 };
 

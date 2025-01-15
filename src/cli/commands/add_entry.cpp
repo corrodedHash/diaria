@@ -105,7 +105,9 @@ void add_entry(std::unique_ptr<entry_encryptor_initializer> keys,
 {
   const auto plaintext = input->get_plaintext();
   if (plaintext.empty()
-      || std::ranges::all_of(plaintext, [](char c) { return std::isspace(c); }))
+      || std::ranges::all_of(plaintext,
+                             [](unsigned char entry_char)
+                             { return std::isspace(entry_char); }))
   {
     throw std::runtime_error(
         "Plaintext is empty or only contains whitespace; discarding");
