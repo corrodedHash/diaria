@@ -160,7 +160,8 @@ void write_all(int pipe_fd, std::span<unsigned char> content)
 
 auto read_until_closed(int pipe_fd) -> safe_vector<unsigned char>
 {
-  safe_array<unsigned char, 4096> buffer {};
+  constexpr int buffer_size = 4096;
+  safe_array<unsigned char, buffer_size> buffer {};
   safe_vector<unsigned char> result {};
   ssize_t bytes_read {};
 
@@ -211,6 +212,7 @@ auto editor_in_private_namespace(void* arg_raw) -> int
   return 0;
 }
 }  // namespace
+
 auto private_namespace_read(std::string_view cmdline)
     -> safe_vector<unsigned char>
 {

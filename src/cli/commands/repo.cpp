@@ -109,6 +109,7 @@ void sync_repo_git(const repo_path_t& repo)
   std::filesystem::current_path(workingdir);
 }
 }  // namespace
+
 void sync_repo(const repo_path_t& repo)
 {
   if (!std::filesystem::exists(repo.repo)) {

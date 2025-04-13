@@ -17,10 +17,10 @@ struct StringMaker<RGB>
 
 TEST_CASE("RGB class")
 {
-  constexpr RGB gray {.red=99, .green=100, .blue=101};
-  constexpr RGB red {.red=255, .green=0, .blue=0};
-  constexpr RGB green {.red=0, .green=255, .blue=0};
-  constexpr RGB blue {.red=0, .green=0, .blue=255};
+  constexpr RGB gray {.red = 99, .green = 100, .blue = 101};
+  constexpr RGB red {.red = 255, .green = 0, .blue = 0};
+  constexpr RGB green {.red = 0, .green = 255, .blue = 0};
+  constexpr RGB blue {.red = 0, .green = 0, .blue = 255};
   SECTION("constructing from hex value")
   {
     REQUIRE(RGB::from_hex(0x636465) == gray);
