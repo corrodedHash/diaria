@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <utility>
 
@@ -23,24 +24,31 @@ struct file_input_reader final : input_reader
   auto get_plaintext() -> safe_vector<unsigned char> override;
 };
 
-struct editor_input_reader final : input_reader
+struct cmdline_input_reader : input_reader
 {
-  explicit editor_input_reader(std::string_view in_cmdline)
+  std::string_view cmdline;
+  explicit cmdline_input_reader(std::string_view in_cmdline)
       : cmdline(in_cmdline)
   {
   }
-  std::string_view cmdline;
+};
+
+struct editor_input_reader final : cmdline_input_reader
+{
+  explicit editor_input_reader(std::string_view in_cmdline)
+      : cmdline_input_reader(in_cmdline)
+  {
+  }
 
   auto get_plaintext() -> safe_vector<unsigned char> override;
 };
 
-struct sandbox_editor_input_reader final : input_reader
+struct sandbox_editor_input_reader final : cmdline_input_reader
 {
   explicit sandbox_editor_input_reader(std::string_view in_cmdline)
-      : cmdline(in_cmdline)
+      : cmdline_input_reader(in_cmdline)
   {
   }
-  std::string_view cmdline;
 
   auto get_plaintext() -> safe_vector<unsigned char> override;
 };
@@ -54,9 +62,6 @@ struct entry_writer
 
 struct file_entry_writer : entry_writer
 {
-protected:
-  static void write_to_file(const std::filesystem::path& filename,
-                            std::span<const unsigned char> data);
 };
 
 struct repo_entry_writer final : file_entry_writer
@@ -71,6 +76,14 @@ struct outfile_entry_writer final : file_entry_writer
   output_file_t outfile;
 
   auto write_entry(std::span<const unsigned char> ciphertext) -> void override;
+};
+
+struct entry_recovery
+{
+  virtual auto handle(std::span<const unsigned char> plaintext,
+                      std::optional<std::span<const unsigned char>> ciphertext)
+      -> void = 0;
+  virtual ~entry_recovery() = default;
 };
 
 void add_entry(std::unique_ptr<entry_encryptor_initializer> keys,

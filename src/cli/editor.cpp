@@ -50,15 +50,18 @@ auto build_argv(const std::string& cmdline)
   return result;
 }
 
-void replace_first(std::string& input_string,
+[[nodiscard]]
+auto replace_first(std::string_view input_string,
                    std::string_view to_replace,
-                   std::string_view replace_with)
+                   std::string_view replace_with) -> std::string
 {
   const std::size_t pos = input_string.find(to_replace);
   if (pos == std::string::npos) {
-    return;
+    return std::string(input_string);
   }
-  input_string.replace(pos, to_replace.length(), replace_with);
+  auto owned_string = std::string(input_string);
+  owned_string.replace(pos, to_replace.length(), replace_with);
+  return owned_string;
 }
 
 void exec_cmdline(std::string_view cmdline)
@@ -82,8 +85,8 @@ auto interactive_content_entry(std::string_view cmdline,
   auto temp_file_path = temp_file_dir / "diaria_XXXXXX";
   const auto child_pid = fork();
   if (child_pid == 0) {
-    auto owned_cmdline = std::string(cmdline);
-    replace_first(owned_cmdline, "%", temp_file_path.c_str());
+    const auto owned_cmdline =
+        replace_first(cmdline, "%", temp_file_path.c_str());
     exec_cmdline(owned_cmdline);
   }
 

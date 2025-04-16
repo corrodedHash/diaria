@@ -66,8 +66,10 @@ auto sandbox_editor_input_reader::get_plaintext() -> safe_vector<unsigned char>
   return private_namespace_read(cmdline);
 }
 
-void file_entry_writer::write_to_file(const std::filesystem::path& filename,
-                                      std::span<const unsigned char> data)
+namespace
+{
+void write_to_file(const std::filesystem::path& filename,
+                   std::span<const unsigned char> data)
 {
   std::filesystem::create_directories(filename.parent_path());
 
@@ -84,6 +86,7 @@ void file_entry_writer::write_to_file(const std::filesystem::path& filename,
     throw std::runtime_error("Could not write to output file");
   }
 }
+}  // namespace
 
 auto repo_entry_writer::write_entry(std::span<const unsigned char> ciphertext)
     -> void
@@ -104,14 +107,37 @@ void add_entry(std::unique_ptr<entry_encryptor_initializer> keys,
                std::unique_ptr<entry_writer> output)
 {
   const auto plaintext = input->get_plaintext();
-  if (plaintext.empty()
-      || std::ranges::all_of(plaintext,
-                             [](unsigned char entry_char)
-                             { return std::isspace(entry_char); }))
-  {
+
+  const auto is_space = [](unsigned char entry_char)
+  { return std::isspace(entry_char); };
+  if (std::ranges::all_of(plaintext, is_space)) {
     throw std::runtime_error(
         "Plaintext is empty or only contains whitespace; discarding");
   }
-  const auto encrypted = keys->init().encrypt(plaintext);
+
+  std::vector<unsigned char> encrypted;
+
+  const auto handle = [&](std::string_view reason)
+  {
+    const auto dump_file = std::filesystem::path {"/tmp"} / "diaria_dump";
+    write_to_file(dump_file, plaintext);
+    std::println(
+        stderr, "{}. Plaintext dumped at {}.", reason, dump_file.c_str());
+  };
+
+  try {
+    encrypted = keys->init().encrypt(plaintext);
+  } catch (...) {
+    handle("Error during encryption");
+    throw;
+  }
+
   output->write_entry(encrypted);
+
+  try {
+    encrypted = keys->init().encrypt(plaintext);
+  } catch (...) {
+    handle("Error while saving cipher text");
+    throw;
+  }
 }
