@@ -113,9 +113,17 @@ auto encrypt(symkey_span_t symkey,
   auto symmetric_encrypted = symenc(symkey, asymmetric_encrypted);
   symmetric_encrypted.insert(symmetric_encrypted.begin(),
                              current_diaria_version);
-  symmetric_encrypted.insert(
-      symmetric_encrypted.begin(), magictag.cbegin(), magictag.cend());
+  static_assert(std::cbegin(magictag) != nullptr);
 
+  /* -Wnull-dereference gets confused here */
+  // symmetric_encrypted.insert(
+  //     symmetric_encrypted.begin(), std::cbegin(magictag),
+  //     std::cend(magictag));
+
+  std::ranges::copy(magictag, std::back_inserter(symmetric_encrypted));
+  std::ranges::rotate(std::begin(symmetric_encrypted),
+                      std::end(symmetric_encrypted) - magictag.size(),
+                      std::end(symmetric_encrypted));
   return symmetric_encrypted;
 }
 auto decrypt(symkey_span_t symkey,
