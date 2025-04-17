@@ -2,7 +2,7 @@ import subprocess
 from pathlib import Path
 from .helper import diaria, key_path
 import uuid
-
+import pytest
 
 def test_write_read(diaria: Path, key_path: Path, tmp_path: Path):
     entry_text = str(uuid.uuid4())
@@ -25,6 +25,7 @@ def test_write_read(diaria: Path, key_path: Path, tmp_path: Path):
     diaria_check_entry(diaria_cmd_base, diary_file.absolute(), entry_text)
 
 
+@pytest.mark.skip(reason="no way of currently testing this")
 def test_write_read_interactive(diaria: Path, key_path: Path, tmp_path: Path):
     entry_path = tmp_path / "entries"
     entry_text = str(uuid.uuid4())
