@@ -7,6 +7,7 @@ import uuid
 DUMP_FILE = "/tmp/diaria_dump"
 
 
+@pytest.mark.skip(reason="Namespaces break in CI test environment currently")
 def test_no_keys(diaria: Path, tmp_path: Path):
     key_path = tmp_path / "keys"
     key_path.mkdir(parents=True)
