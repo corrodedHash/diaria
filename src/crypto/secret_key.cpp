@@ -109,7 +109,7 @@ auto generate_keypair() -> std::pair<public_key_t, private_key_t>
                                                      recipient_sk.data())
       != 0)
   {
-    throw std::invalid_argument("Error generating keypair");
+    throw std::invalid_argument("Error generating key pair");
   }
   return {recipient_pk, std::move(recipient_sk)};
 }
