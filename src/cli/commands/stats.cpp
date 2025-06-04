@@ -1,6 +1,5 @@
 #include <cassert>
 #include <chrono>
-#include <cmath>
 #include <cstdint>
 #include <filesystem>
 #include <optional>

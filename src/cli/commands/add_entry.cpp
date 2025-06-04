@@ -1,10 +1,6 @@
 #include <algorithm>
 #include <cctype>
 #include <chrono>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -115,8 +111,6 @@ void add_entry(std::unique_ptr<entry_encryptor_initializer> keys,
         "Plaintext is empty or only contains whitespace; discarding");
   }
 
-  std::vector<unsigned char> encrypted;
-
   const auto handle = [&](std::string_view reason)
   {
     const auto dump_file = std::filesystem::path {"/tmp"} / "diaria_dump";
@@ -125,6 +119,7 @@ void add_entry(std::unique_ptr<entry_encryptor_initializer> keys,
         stderr, "{}. Plaintext dumped at {}.", reason, dump_file.c_str());
   };
 
+  std::vector<unsigned char> encrypted;
   try {
     encrypted = keys->init().encrypt(plaintext);
   } catch (...) {

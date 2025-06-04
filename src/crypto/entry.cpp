@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <array>
-#include <cstdio>
 #include <ranges>
 #include <span>
 #include <stdexcept>
